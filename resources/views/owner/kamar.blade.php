@@ -117,18 +117,18 @@
     .btn-del-row:hover { background:#fee2e2; }
 
     .modal-save-bar {
-        padding:1rem 1.5rem; background:#f8fafd; border-top:1px solid #f0f4f8;
-        display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+        padding:.8rem 1.2rem; background:#fff; border-top:1px solid #f0f4f8;
+        display:flex; align-items:center; justify-content:flex-end; gap:.6rem;
     }
-    .save-hint { font-size:.75rem; color:#8fa3b8; }
+    .save-hint { font-size:.68rem; color:#8fa3b8; background:#f8fafc; padding:.4rem .8rem; border-radius:.5rem; margin-bottom:.8rem; display:flex; align-items:center; gap:.4rem; }
     .save-hint span { color:var(--primary); font-weight:700; }
     .btn-save-all {
-        height:40px; padding:0 1.5rem; border-radius:.65rem; border:0;
+        height:38px; padding:0 1.2rem; border-radius:.6rem; border:0;
         background:linear-gradient(135deg,#e8401c,#ff7043); color:#fff;
-        font-weight:800; font-size:.84rem; cursor:pointer; display:flex;
+        font-weight:700; font-size:.8rem; cursor:pointer; display:flex;
         align-items:center; gap:.4rem; transition:.2s;
     }
-    .btn-save-all:hover { filter:brightness(1.08); transform:translateY(-1px); }
+    .btn-save-all:hover { filter:brightness(1.08); transform:translateY(-1px); box-shadow:0 4px 12px rgba(232,64,28,.2); }
     .btn-save-all:active { transform:translateY(0); }
 </style>
 @endpush
@@ -286,7 +286,7 @@
             ══════════════════════════════════════════════ --}}
             <div class="modal fade" id="{{ $modalId }}" tabindex="-1">
                 <div class="modal-dialog modal-dialog-scrollable modal-lg">
-                    <div class="modal-content border-0 rounded-4 shadow" style="overflow:hidden;">
+                    <div class="modal-content border-0 rounded-4 shadow" style="overflow:hidden; height: 85vh;">
 
                         {{-- MODAL HEADER --}}
                         <div class="modal-header border-0 pb-2" style="background:#fff;">
@@ -304,30 +304,31 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
-                        {{-- INFO BAR --}}
-                        <div style="background:#fffbf0;border-bottom:1px solid #fde68a;padding:.6rem 1.2rem;font-size:.75rem;color:#92400e;display:flex;align-items:center;gap:.5rem;">
-                            <i class="bi bi-info-circle-fill" style="color:#d97706;"></i>
-                            Edit nomor, status, dan harga langsung di tabel. Klik <strong>Simpan Semua</strong> untuk menyimpan sekaligus.
+                        <div style="padding:0 1.2rem 1rem;">
+                            <div class="save-hint mb-0">
+                                <i class="bi bi-lightbulb-fill text-warning"></i>
+                                <span>Tips:</span> Edit nomor, status, dan harga langsung di tabel. Klik <strong>Simpan Semua</strong> di bawah untuk menyimpan.
+                            </div>
                         </div>
 
                         {{-- FORM BULK EDIT --}}
-                        <form action="{{ route('owner.kamar.bulkUpdate') }}" method="POST" id="form-{{ $modalId }}">
+                        <form action="{{ route('owner.kamar.bulkUpdate') }}" method="POST" id="form-{{ $modalId }}" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
                             @csrf
                             @method('PATCH')
 
-                            <div class="modal-body p-0" style="max-height:420px;overflow-y:auto;">
+                            <div class="modal-body p-0" style="flex: 1; overflow-y: auto;">
                                 <table class="edit-table">
                                     <thead>
                                         <tr>
                                             <th style="width:50px;text-align:center;">#</th>
                                             <th>No. Kamar</th>
                                             <th>Status</th>
-                                           <th>Harga Sewa (Rp)</th>
+                                            <th>Harga Sewa (Rp)</th>
                                             <th style="text-align:center;">Detail</th>
                                             <th style="width:44px;"></th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="tbody-{{ $modalId }}">
                                         @foreach($roomsPerTipe as $idx => $room)
                                         <tr>
                                             <td style="text-align:center;font-size:.72rem;color:#8fa3b8;font-weight:700;">
@@ -392,22 +393,22 @@
                                 </table>
                             </div>
 
-                            {{-- SAVE BAR --}}
-                            <div class="modal-save-bar">
-                                <div class="save-hint">
-                                    <i class="bi bi-lightbulb me-1"></i>
-                                    Klik <span>Detail</span> untuk edit foto & fasilitas lengkap
+                                <div class="modal-save-bar" style="flex-shrink: 0; background: #fff; border-top: 1px solid #eee; z-index: 10;">
+                                    <div class="d-flex flex-wrap gap-2 w-100 justify-content-end">
+                                        <a href="{{ route('owner.kamar.bulkEditDetail', ['ids' => $roomsPerTipe->pluck('id_room')->join(',')]) }}"
+                                           class="btn btn-outline-primary fw-bold px-3" 
+                                           style="font-size:.78rem; border-color:#dbeafe; color:#1e40af; border-radius:.6rem; text-decoration:none; display:flex; align-items:center;">
+                                           <i class="bi bi-grid-fill me-1"></i> Edit Detail Masal
+                                        </a>
+                                        <button type="button" class="btn btn-light fw-bold px-3"
+                                                style="font-size:.78rem; border-radius:.6rem;" data-bs-dismiss="modal">
+                                            Batal
+                                        </button>
+                                        <button type="submit" class="btn-save-all">
+                                            <i class="bi bi-check2-all"></i> Simpan No.Kamar & Harga
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-light fw-bold px-4 rounded-3"
-                                            style="font-size:.82rem;" data-bs-dismiss="modal">
-                                        Batal
-                                    </button>
-                                    <button type="submit" class="btn-save-all">
-                                        <i class="bi bi-check2-all"></i> Simpan Semua
-                                    </button>
-                                </div>
-                            </div>
                         </form>
 
                     </div>

@@ -362,9 +362,9 @@
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(180deg, rgba(4, 10, 20, 0.24) 0%, rgba(4, 10, 20, 0.68) 100%),
+        linear-gradient(180deg, rgba(4, 10, 20, 0.35) 0%, rgba(4, 10, 20, 0.75) 100%),
         url('{{ asset('images/daftar.png') }}') center/cover no-repeat;
-      transform: scale(1.05);
+      transform: scale(1.1);
     }
 
     .visual-panel::before,
@@ -397,9 +397,10 @@
       width: 100%;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
+      justify-content: flex-start;
+      padding-top: 15%;
+      align-items: flex-start;
+      text-align: left;
       padding: 46px;
       color: #fff;
     }
@@ -419,10 +420,11 @@
     }
 
     .visual-copy {
-      max-width: 420px;
+      max-width: 480px;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: flex-start;
+      text-align: left;
     }
 
     .visual-title {
@@ -608,18 +610,38 @@
       <section class="visual-panel">
         <div class="visual-media"></div>
         <div class="visual-content">
-          <div class="visual-badge">
-            <i class="bi bi-stars"></i>
-            Selamat datang di KostFinder
-          </div>
 
           <div class="visual-copy">
-            <h3 class="visual-title">Temukan kos yang nyaman untuk langkah barumu.</h3>
-            <p class="visual-text">
-              Cari hunian dengan informasi yang jelas, suasana yang pas, dan proses masuk yang lebih mudah dalam satu tempat.
+            <h3 class="visual-title" style="margin-bottom: 0.5rem;">Temukan Kos Impianmu dengan Mudah</h3>
+            <p class="visual-text" style="margin-bottom: 2rem; opacity: 0.9;">
+              Daftar sekarang dan mulai cari kos terbaik di sekitar lokasimu.
             </p>
-            <div class="visual-caption">
-              Mulai dari kamar favoritmu, lalu lanjutkan semuanya dengan pengalaman pencarian yang lebih rapi dan meyakinkan.
+
+            <div class="visual-features" style="display: flex; flex-direction: column; gap: 1.2rem; width: 100%;">
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(232, 64, 28, 0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(232, 64, 28, 0.5);">
+                  <i class="bi bi-search" style="color: #ff6b2b; font-size: 1.1rem;"></i>
+                </div>
+                <span style="font-weight: 600; font-size: 0.95rem;">Cari kos berdasarkan lokasi & fasilitas</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(232, 64, 28, 0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(232, 64, 28, 0.5);">
+                  <i class="bi bi-heart" style="color: #ff6b2b; font-size: 1.1rem;"></i>
+                </div>
+                <span style="font-weight: 600; font-size: 0.95rem;">Simpan kos favorit dengan mudah</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(232, 64, 28, 0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(232, 64, 28, 0.5);">
+                  <i class="bi bi-chat-dots" style="color: #ff6b2b; font-size: 1.1rem;"></i>
+                </div>
+                <span style="font-weight: 600; font-size: 0.95rem;">Hubungi pemilik kos langsung</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(232, 64, 28, 0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(232, 64, 28, 0.5);">
+                  <i class="bi bi-shield-check" style="color: #ff6b2b; font-size: 1.1rem;"></i>
+                </div>
+                <span style="font-weight: 600; font-size: 0.95rem;">Akun aman & terpercaya</span>
+              </div>
             </div>
           </div>
         </div>
@@ -638,9 +660,11 @@
               <span class="brand-subtitle">Platform pencarian kos yang terasa simpel</span>
             </div>
           </a>
-
-
-          @if(session('status'))
+          
+          <div class="mb-4">
+            <h2 style="font-weight: 800; color: #10233f; font-size: 1.5rem; margin-bottom: 0.4rem;">Selamat datang! 👋</h2>
+            <p style="color: #6c7a92; font-size: 0.88rem; margin: 0;">Silakan masuk ke akun kamu untuk melanjutkan.</p>
+          </div>          @if(session('status'))
             <div class="alert alert-success">
               <i class="bi bi-check-circle-fill me-2"></i>{{ session('status') }}
             </div>

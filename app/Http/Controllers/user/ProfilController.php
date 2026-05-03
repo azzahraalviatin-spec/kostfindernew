@@ -44,14 +44,17 @@ class ProfilController extends Controller
             'name'              => 'required|string|max:255',
             'jenis_kelamin'     => 'nullable|in:laki-laki,perempuan',
             'tanggal_lahir'     => 'nullable|date',
-            'no_hp'             => 'nullable|string|max:20|unique:users,no_hp,' . $user->id,
-            'kontak_darurat'    => 'nullable|string|max:20',
+            'no_hp'             => 'nullable|string|max:20|different:kontak_darurat|unique:users,no_hp,' . $user->id,
+            'kontak_darurat'    => 'nullable|string|max:20|different:no_hp',
             'pekerjaan'         => 'nullable|string|max:100',
             'instansi'          => 'nullable|string|max:100',
             'pendidikan'        => 'nullable|string|max:50',
             'status_pernikahan' => 'nullable|string|max:50',
             'kota'              => 'nullable|string|max:100',
             'foto_profil'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ], [
+            'no_hp.different'          => 'Nomor HP tidak boleh sama dengan nomor darurat.',
+            'kontak_darurat.different' => 'Nomor darurat tidak boleh sama dengan nomor HP kamu.',
         ]);
 
         $data = $request->only([

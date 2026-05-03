@@ -32,22 +32,6 @@
     text-decoration: none;
     flex-shrink: 0;
   }
-  .kf-brand-icon {
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 14px;
-  color: #fff;
-  font-size: 1.25rem;
- .kf-brand-icon {
-    background: linear-gradient(135deg, #1a56db 0%, #1e40af 100%); /* biru terang */
-    box-shadow: 0 8px 20px rgba(26, 86, 219, 0.30);
-}
-  box-shadow: 0 8px 20px rgba(16, 35, 63, 0.22);
-  flex-shrink: 0;
-}
   .kf-brand-text { line-height: 1; }
   .kf-brand-name {
     font-family: 'Fraunces', Georgia, serif;
@@ -320,25 +304,29 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
 </style>
 
 <nav class="kf-navbar navbar navbar-expand-lg sticky-top" id="kfNavbar">
   <div class="container">
 
     {{-- ── LOGO ── --}}
- {{-- ── LOGO ── --}}
-<a class="kf-brand" href="{{ route('home') }}">
-  <span class="kf-brand-icon">
-    <i class="bi bi-house-heart-fill"></i>
-  </span>
-  <div class="kf-brand-text">
-    <div class="kf-brand-name">
-      <span class="kf-kost">Kost</span><span class="kf-finder">Finder</span>
-    </div>
-    <span class="kf-brand-sub">Jawa Timur</span>
-  </div>
-</a>
+    <a class="kf-brand" href="{{ route('home') }}">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="34" height="34" rx="8" fill="#E8401C"/>
+        <path d="M17 6.5L7 14.8V27H13.5V21H20.5V27H27V14.8L17 6.5Z" fill="white" opacity=".95"/>
+        <rect x="14.5" y="21" width="5" height="6" rx="1" fill="#E8401C"/>
+        <rect x="19.5" y="12.5" width="4" height="3.5" rx=".5" fill="#E8401C"/>
+        <circle cx="25.5" cy="25.5" r="4.5" fill="#0f1923"/>
+        <circle cx="24.9" cy="24.9" r="2.2" stroke="white" stroke-width="1.2" fill="none"/>
+        <line x1="26.4" y1="26.4" x2="28" y2="28" stroke="white" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <div class="kf-brand-text">
+      <div class="kf-brand-name">
+  <span class="kf-kost">Kost</span><span class="kf-finder">Finder</span>
+</div>
+        <span class="kf-brand-sub">Jawa Timur</span>
+      </div>
+    </a>
 
     {{-- ── TOGGLER MOBILE ── --}}
     <button class="kf-toggler navbar-toggler ms-auto me-2 d-lg-none" type="button"
@@ -350,12 +338,12 @@
       {{-- ── SEARCH BAR (tampil di HP, sembunyi di Laptop sesuai permintaan) ── --}}
       <div id="navbarSearch" class="d-none d-lg-none position-relative">
         <div class="kf-search-wrap">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-       stroke="#a0aabf" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;">
-    <circle cx="11" cy="11" r="7"/>
-    <line x1="16.5" y1="16.5" x2="21" y2="21"/>
-  </svg>
-  <input type="text" id="navSearchInput"
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="#a0aabf" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;">
+            <circle cx="11" cy="11" r="7"/>
+            <line x1="16.5" y1="16.5" x2="21" y2="21"/>
+          </svg>
+          <input type="text" id="navSearchInput"
                  placeholder="Cari lokasi, kampus, jalan..."
                  autocomplete="off"
                  onfocus="showNavDropdown()">

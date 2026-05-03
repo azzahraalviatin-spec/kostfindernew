@@ -142,6 +142,8 @@ Route::prefix('owner')->name('owner.')->middleware(['auth', 'role.owner'])->grou
         ->name('kost.facility.destroy');
 
     // KAMAR
+    Route::get('kamar/bulk-edit-detail', [KamarController::class, 'bulkEditDetail'])->name('kamar.bulkEditDetail');
+    Route::post('kamar/bulk-update-detail', [KamarController::class, 'bulkUpdateDetail'])->name('kamar.bulkUpdateDetail');
     Route::resource('kamar', App\Http\Controllers\Owner\KamarController::class);
 
     // BOOKING

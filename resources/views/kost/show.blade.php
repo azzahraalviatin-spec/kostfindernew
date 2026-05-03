@@ -329,12 +329,23 @@ body { background: var(--bg); }
   $fotoUtama = $kost->foto_utama ? ltrim($kost->foto_utama, '/') : null;
   $semuaFoto = collect();
   if ($fotoUtama) $semuaFoto->push(['path' => $fotoUtama, 'label' => 'Foto Utama']);
-  foreach ($kost->images as $img) $semuaFoto->push(['path' => ltrim($img->image_path, '/'), 'label' => $img->kategori ?: 'Foto Properti']);
-  foreach ($kost->rooms as $room)
-    foreach ($room->images as $img)
-      $semuaFoto->push(['path' => ltrim($img->foto_path, '/'), 'label' => $img->judul ?: ('Kamar ' . $room->nomor_kamar)]);
-  foreach ($kost->generalFacilities as $fac)
-    $semuaFoto->push(['path' => ltrim($fac->foto, '/'), 'label' => $fac->nama]);
+  
+  foreach ($kost->images as $img) {
+      $semuaFoto->push(['path' => ltrim($img->image_path, '/'), 'label' => $img->kategori ?: 'Foto Properti']);
+  }
+  
+  foreach ($kost->rooms as $room) {
+      foreach ($room->images as $img) {
+          $semuaFoto->push(['path' => ltrim($img->foto_path, '/'), 'label' => $img->judul ?: ('Kamar ' . $room->nomor_kamar)]);
+      }
+  }
+  
+  foreach ($kost->generalFacilities as $fac) {
+      $semuaFoto->push(['path' => ltrim($fac->foto, '/'), 'label' => $fac->nama]);
+  }
+
+  // Filter agar foto yang sama hanya muncul satu kali saja
+  $semuaFoto = $semuaFoto->unique('path')->values();
   $owner = $kost->owner ?? null;
   $foto1 = $semuaFoto->get(0);
   $foto2 = $semuaFoto->get(1) ?? $semuaFoto->get(0);
@@ -601,8 +612,7 @@ body { background: var(--bg); }
               </div>
             @endif
             @if($kost->aturan)
-              @foreach(explode("
-", $kost->aturan) as $a)
+              @foreach(explode("\n", $kost->aturan) as $a)
                 @if(trim($a))
                   @php
                     $aLower = strtolower(trim($a));
@@ -799,316 +809,226 @@ body { background: var(--bg); }
         </div>
 
         {{-- REVIEW --}}
-        <div id="sec-review" class="sec mb-1">
-          <div class="sec-title">⭐ Review</div>
+        <div id="sec-review" class="sec mb-1" style="padding-bottom:1.5rem;">
+          <div class="sec-title">⭐ Review penghuni ({{ $kost->reviews->count() }})</div>
           @if($kost->reviews->count() > 0)
-            @php 
-              $avg=round($kost->reviews->avg('rating'),1); 
-              $total=$kost->reviews->count(); 
-              // Mapping DB columns to the 6 slots in screenshot
-              $aspects = [
-                ['label' => 'Kebersihan',      'val' => round($kost->reviews->avg('rating_kebersihan'), 1) ?: 0],
-                ['label' => 'Kenyamanan',      'val' => round($kost->reviews->avg('rating_lokasi'), 1) ?: 0],
-                ['label' => 'Keamanan',        'val' => round($kost->reviews->avg('rating_lokasi'), 1) ?: 0],
-                ['label' => 'Harga',           'val' => round($kost->reviews->avg('rating_harga'), 1) ?: 0],
-                ['label' => 'Fasilitas Kamar', 'val' => round($kost->reviews->avg('rating_fasilitas'), 1) ?: 0],
-                ['label' => 'Fasilitas Umum',  'val' => round($kost->reviews->avg('rating_fasilitas'), 1) ?: 0],
-              ];
+            @php
+              $avg = round($kost->reviews->avg('rating'), 1);
+              $total = $kost->reviews->count();
+              $stars = [5=>0,4=>0,3=>0,2=>0,1=>0];
+              foreach($kost->reviews as $r) $stars[(int)$r->rating]++;
             @endphp
-            <div class="rating-summary" style="background:#fff; border:1px solid #eee; box-shadow:none; flex-direction:column; align-items:stretch; gap:1.2rem; padding:1.25rem;">
-              <div class="d-flex align-items-center gap-4 flex-wrap flex-md-nowrap">
-                <div class="text-center" style="min-width:110px; border-right:1px solid #eee; padding-right:1.5rem;">
-                  <div class="rating-big" style="font-size:3.5rem; margin-bottom:.1rem; color:var(--dark);">{{ $avg }}</div>
-                  <div style="font-size:1.1rem;color:#f59e0b;margin-bottom:.3rem;">@for($i=1;$i<=5;$i++)<i class="bi bi-star{{ $i<=$avg?'-fill':'' }}"></i>@endfor</div>
-                  <div style="font-size:.75rem;color:#888;font-weight:600;">({{ $total }} review)</div>
+            <div class="rating-summary flex-wrap gap-4">
+              <div class="text-center">
+                <div class="rating-big">{{ $avg }}</div>
+                <div style="font-size:.75rem;color:#f59e0b;margin-top:.1rem;">
+                  @for($i=1;$i<=5;$i++)<i class="bi bi-star{{ $i<=$avg?'-fill':'' }}"></i>@endfor
                 </div>
-                <div class="aspect-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
-                  @foreach($aspects as $a)
-                  <div class="aspect-item mb-1">
-                    <span class="aspect-lbl" style="width:100px;">{{ $a['label'] }}</span>
-                    <div class="aspect-bar-bg" style="height:4px;">
-                      <div class="aspect-bar-fill" style="width:{{ ($a['val']/5)*100 }}%; height:4px; background:var(--dark);"></div>
-                    </div>
-                    <span class="aspect-val" style="color:var(--dark);">{{ number_format($a['val'], 1) }}</span>
-                  </div>
-                  @endforeach
+                <div style="font-size:.68rem;color:#888;margin-top:.2rem;">{{ $total }} Review</div>
+              </div>
+              <div class="aspect-grid">
+                @foreach([5,4,3,2,1] as $s)
+                <div class="aspect-item">
+                  <span class="aspect-lbl">{{ $s }} <i class="bi bi-star-fill text-warning"></i></span>
+                  <div class="aspect-bar-bg"><div class="aspect-bar-fill" style="width:{{ ($stars[$s]/$total)*100 }}%"></div></div>
+                  <span class="aspect-val">{{ $stars[$s] }}</span>
                 </div>
+                @endforeach
               </div>
             </div>
-            @foreach($kost->reviews->sortByDesc('created_at')->take(5) as $rv)
-            <div class="review-card">
-              <div class="d-flex gap-3">
-                <div class="review-ava" style="width:40px; height:40px; background:#f0f4f8; color:var(--primary); font-size:.9rem; border:1px solid #e4e9f0;">
-                  @if($rv->user && $rv->user->foto_profil)<img src="{{ asset('storage/'.$rv->user->foto_profil) }}" style="width:100%;height:100%;object-fit:cover;" alt="">
-                  @else{{ strtoupper(substr($rv->user->name ?? 'A', 0, 1)) }}@endif
-                </div>
-                <div style="flex:1;">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <div>
-                      <div class="review-user-name">{{ $rv->user->name ?? 'Anonim' }}</div>
-                      <div class="review-date">{{ $rv->created_at->diffForHumans() }}</div>
-                    </div>
-                    <div style="font-size:.75rem;color:#f59e0b;">@for($i=1;$i<=5;$i++)<i class="bi bi-star{{ $i<=$rv->rating?'-fill':'' }}"></i>@endfor</div>
-                  </div>
-                  @if($rv->komentar)<p class="review-text">{{ $rv->komentar }}</p>@endif
 
-                  @if($rv->foto_review)
-                    <div class="review-photos">
-                      @foreach($rv->foto_review as $foto)
-                        <div class="review-photo-item" onclick="bukaLbCustom('{{ asset('storage/'.$foto) }}', 'Foto Review')">
-                          <img src="{{ asset('storage/'.$foto) }}" alt="Review">
-                        </div>
-                      @endforeach
-                    </div>
-                  @endif
-                  
-                  @if($rv->reply)
-                  <div style="background:#f8fafc; border-left:3px solid var(--primary); padding:10px 12px; margin-top:12px; border-radius:6px;">
-                    <div style="font-weight:700; font-size:0.75rem; color:var(--primary); margin-bottom:4px; display:flex; align-items:center; gap:5px;">
-                      <i class="bi bi-reply-fill"></i> Balasan dari Pemilik Kos
-                    </div>
-                    <div style="font-size:0.78rem; color:#475569; line-height:1.5;">{{ $rv->reply->balasan }}</div>
+            @foreach($kost->reviews as $review)
+              <div class="review-card">
+                <div class="d-flex gap-3">
+                  <div class="review-ava">
+                    @if($review->user->foto_profil)<img src="{{ asset('storage/'.$review->user->foto_profil) }}" style="width:100%;height:100%;object-fit:cover;">
+                    @else{{ strtoupper(substr($review->user->name,0,1)) }}@endif
                   </div>
-                  @endif
+                  <div class="flex-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="review-user-name">{{ $review->user->name }}</div>
+                      <div class="review-date">{{ $review->created_at->translatedFormat('d M Y') }}</div>
+                    </div>
+                    <div style="font-size:.72rem;color:#f59e0b;margin-top:.1rem;">
+                      @for($i=1;$i<=5;$i++)<i class="bi bi-star{{ $i<=$review->rating?'-fill':'' }}"></i>@endfor
+                    </div>
+                    <div class="review-text">{{ $review->review }}</div>
+                  </div>
                 </div>
               </div>
-            </div>
             @endforeach
           @else
-            <div class="text-center py-4" style="color:var(--text-muted);">
-              <div style="font-size:2.3rem;margin-bottom:.4rem;">⭐</div>
-              <div style="font-size:.82rem;font-weight:600;">Belum ada review</div>
+            <div class="text-center py-4 text-muted" style="font-size:.82rem;">
+              <i class="bi bi-chat-left-dots fs-3 d-block mb-2 opacity-25"></i>
+              Belum ada review untuk kos ini
             </div>
           @endif
         </div>
 
         {{-- PEMILIK KOS --}}
         <div id="sec-pemilik" class="sec mb-1">
+          <div class="sec-title">👤 Informasi Pemilik</div>
           <div class="pemilik-wrap">
             <div class="pemilik-ava">
-              @if($owner && $owner->foto_profil)<img src="{{ asset('storage/'.$owner->foto_profil) }}" style="width:100%;height:100%;object-fit:cover;" alt="">
+              @if($owner && $owner->foto_profil)<img src="{{ asset('storage/'.$owner->foto_profil) }}" style="width:100%;height:100%;object-fit:cover;">
               @else{{ strtoupper(substr($owner->name ?? 'P', 0, 1)) }}@endif
             </div>
-            <div>
-              <div style="font-weight:800;font-size:.92rem;color:var(--dark);">{{ $owner->name ?? 'Pemilik Kost' }}</div>
-              <div style="font-size:.74rem;color:var(--text-muted);">Pemilik Kos · KostFinder</div>
-              @if($owner && $owner->created_at)<div style="font-size:.72rem;color:var(--text-muted);">Aktif sejak {{ $owner->created_at->translatedFormat('M Y') }}</div>@endif
-              <div style="font-size:.72rem;color:#22c55e;font-weight:600;margin-top:.12rem;"><i class="bi bi-shield-check-fill me-1"></i>Terverifikasi</div>
+            <div class="flex-1">
+              <div style="font-weight:800;font-size:.9rem;color:var(--dark);">{{ $owner->name ?? 'Pemilik Kost' }}</div>
+              <div style="font-size:.7rem;color:#22c55e;font-weight:600;"><span class="online-dot"></span>Aktif baru saja</div>
             </div>
-            <div class="ms-auto"><button class="btn-hubungi" onclick="alert('Fitur chat segera hadir!')"><i class="bi bi-chat-dots me-1"></i>Hubungi</button></div>
+            <button class="btn-hubungi" onclick="alert('Fitur chat segera hadir!')">Tanya Pemilik</button>
           </div>
-        </div>
-
-        {{-- REKOMENDASI --}}
-        @if($rekomendasi->count() > 0)
-        <div class="sec mb-1">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <div class="sec-title mb-0">🏘️ Kamu mungkin menyukainya</div>
-            <div class="d-flex gap-1">
-              <button class="rekom-nav-btn" id="rkPrev"><i class="bi bi-chevron-left"></i></button>
-              <button class="rekom-nav-btn" id="rkNext"><i class="bi bi-chevron-right"></i></button>
-            </div>
-          </div>
-          <div class="rekom-track" id="rkTrack">
-            @foreach($rekomendasi as $r)
-            <a href="{{ route('kost.show', $r->id_kost) }}" class="rekom-card">
-              @if($r->foto_utama)<img src="{{ asset('storage/'.$r->foto_utama) }}" class="rekom-thumb" alt="{{ $r->nama_kost }}">
-              @else<div class="rekom-thumb-ph">🏠</div>@endif
-              <div style="padding:.6rem .75rem;">
-                <div style="font-size:.69rem;color:#888;margin-bottom:.12rem;">{{ $r->tipe_kost }}</div>
-                <div style="font-weight:700;font-size:.8rem;color:var(--dark);margin-bottom:.12rem;">{{ Str::limit($r->nama_kost,26) }}</div>
-                <div style="font-size:.69rem;color:#888;margin-bottom:.35rem;"><i class="bi bi-geo-alt"></i> {{ $r->kota }}</div>
-                <div style="font-weight:800;color:var(--primary);font-size:.82rem;">Rp {{ number_format($r->harga_mulai,0,',','.') }}<span style="font-weight:400;color:#888;font-size:.68rem;">/bln</span></div>
-              </div>
-            </a>
-            @endforeach
-          </div>
-        </div>
-        @endif
-
-        {{-- PILIH KAMAR --}}
-        <div class="sec" style="margin-bottom:0;">
-          <div class="sec-title">🚪 Pilih Kamar Tersedia</div>
-          @if($kost->rooms->isEmpty())
-            <div class="text-center py-4" style="color:var(--text-muted);"><div style="font-size:2.3rem;">🚪</div><div style="font-size:.82rem;">Belum ada kamar tersedia</div></div>
-          @else
-          <div class="row g-2">
-            @foreach($kost->rooms as $room)
-            @php $fA=is_array($room->fasilitas)?$room->fasilitas:(json_decode($room->fasilitas,true)?:[]); @endphp
-            <div class="col-12 col-md-6">
-              <div class="kamar-card">
-                @if($room->images->isNotEmpty())<img src="{{ asset('storage/'.ltrim($room->images->first()->foto_path,'/')) }}" class="kamar-thumb" alt="">
-                @else<div class="kamar-thumb-ph">🛏️</div>@endif
-                <div style="padding:.75rem .9rem;">
-                  <div class="d-flex justify-content-between align-items-start mb-1">
-                    <div>
-                      <div style="font-weight:800;font-size:.84rem;color:var(--dark);line-height:1.4;">
-                        {{ $kost->nama_kost }}
-                        @if($room->tipe_kamar)
-                          <span style="color:var(--text-muted);font-weight:400;"> - </span>Tipe {{ $room->tipe_kamar }}
-                        @endif
-                        <span style="color:var(--text-muted);font-weight:400;"> - </span>No. {{ $room->nomor_kamar }}
-                      </div>
-                    </div>
-                    <span class="{{ $room->status_kamar==='tersedia'?'status-tersedia':'status-terisi' }}">{{ $room->status_kamar==='tersedia'?'✅ Tersedia':'❌ Terisi' }}</span>
-                  </div>
-                  @if($room->ukuran)<div style="font-size:.73rem;color:#666;margin-bottom:.22rem;">📐 {{ $room->ukuran }}</div>@endif
-                  @if(count($fA)>0)
-                    <div class="mb-2">
-                      @foreach(array_slice($fA,0,3) as $f)<span class="fas-tag">{{ $f }}</span>@endforeach
-                      @if(count($fA)>3)<span class="fas-tag">+{{ count($fA)-3 }}</span>@endif
-                    </div>
-                  @endif
-                  <div style="font-size:.76rem;margin-bottom:.45rem;">
-                    @if($room->aktif_bulanan && $room->harga_per_bulan)<strong style="color:var(--primary);">Rp {{ number_format($room->harga_per_bulan,0,',','.') }}</strong><span style="color:#888;">/bln</span>@endif
-                    @if($room->aktif_harian && $room->harga_harian)<span style="margin-left:.38rem;"><strong style="color:#d97706;">Rp {{ number_format($room->harga_harian,0,',','.') }}</strong><span style="color:#888;">/hari</span></span>@endif
-                  </div>
-                  <div style="border-top:1px solid #f0f3f8;padding-top:.45rem;">
-                    @if($room->status_kamar==='tersedia')
-                      @auth
-                        @if(auth()->user()->role==='user')
-                          <button onclick="pilihKamarDanScroll({{ $room->id_room }})" class="btn btn-sm btn-danger w-100" style="font-size:.74rem;border-radius:.42rem;">Pilih Kamar Ini</button>
-                        @endif
-                      @else
-                        <a href="{{ route('login') }}" class="btn btn-sm btn-outline-danger w-100" style="font-size:.74rem;border-radius:.42rem;text-align:center;">Login dulu</a>
-                      @endauth
-                    @else
-                      <span style="font-size:.71rem;color:#aaa;">Tidak tersedia</span>
-                    @endif
-                  </div>
-                </div>
-              </div>
-            </div>
-            @endforeach
-          </div>
-          @endif
         </div>
 
       </div>
 
-      {{-- SIDEBAR --}}
+      {{-- KOLOM KANAN --}}
       <div class="col-12 col-lg-4">
         <div class="sidebar-sticky">
-          <div class="price-card mb-2">
-            <div style="margin-bottom:.8rem;">
-              <div class="price-main">Rp {{ number_format($kost->harga_mulai,0,',','.') }}<span class="price-period">/bulan</span></div>
-              <small style="font-size:.7rem;color:#888;">💰 Harga mulai dari</small>
-            </div>
+
+          {{-- BOOKING CARD --}}
+          <div class="price-card mb-3" id="frmBooking">
+            <div class="detail-label mb-2">Harga Mulai</div>
+            <div class="price-main">Rp {{ number_format($kost->harga_mulai,0,',','.') }}<span class="price-period"> / bulan</span></div>
+            <hr class="sec-div">
 
             @auth
-            @if(auth()->user()->role==='user')
-              @php $tagihan=\App\Models\Booking::where('user_id',auth()->id())->where('status_booking','pending')->where('status_pembayaran','belum')->with('room.kost')->latest()->first(); @endphp
-              @if($tagihan)
-              <div style="background:var(--primary-light);border:1.5px solid var(--primary-border);border-radius:.58rem;padding:.7rem .85rem;margin-bottom:.7rem;">
-                <div style="font-weight:700;font-size:.76rem;color:#be3f1d;">⚠️ Tagihan Belum Dibayar!</div>
-                <div style="font-size:.7rem;color:var(--text-muted);margin:.18rem 0;">Booking <strong style="color:var(--primary);">{{ $tagihan->room->kost->nama_kost??'-' }}</strong> belum dibayar.</div>
-                <a href="{{ route('user.booking.pembayaran',$tagihan->id_booking) }}" style="display:inline-block;margin-top:.38rem;background:var(--primary);color:#fff;font-size:.7rem;font-weight:700;padding:.25rem .7rem;border-radius:.32rem;text-decoration:none;">💳 Segera Bayar →</a>
-              </div>
-              @endif
+              @if(auth()->user()->role === 'user')
+                <form action="{{ route('user.booking.store') }}" method="POST">
+                  @csrf
+                  <input type="hidden" name="id_room" id="sbRoomId">
+                  <input type="hidden" name="tipe_sewa" id="sbTipe" value="bulanan">
+                  <input type="hidden" name="jumlah_sewa" id="sbJml" value="1">
 
-              <form id="frmBooking" action="{{ route('user.booking.store') }}" method="POST">
-                @csrf
-                <input type="hidden" name="room_id" id="sbRoomId">
-                <input type="hidden" name="tipe_durasi" id="sbTipe" value="bulanan">
-                <input type="hidden" name="jumlah_durasi" id="sbJml" value="1">
-
-                <div style="font-size:.68rem;color:#888;margin-bottom:.32rem;font-weight:600;">🚪 Pilih Kamar</div>
-                @foreach($kost->rooms as $room)
-                  <div class="kamar-select-item {{ $room->status_kamar!=='tersedia'?'terisi':'' }}"
-                    id="ki{{ $room->id_room }}"
-                    data-hb="{{ $room->harga_per_bulan??0 }}"
-                    data-hh="{{ $room->harga_harian??0 }}"
-                    data-ah="{{ $room->aktif_harian?'1':'0' }}"
-                    data-ab="{{ $room->aktif_bulanan?'1':'0' }}"
-                    onclick="{{ $room->status_kamar==='tersedia'?'pilihKamar('.$room->id_room.',this)':'' }}">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <div>
-                        <div style="font-size:.77rem;font-weight:700;color:var(--dark);line-height:1.4;">
-                          {{ $kost->nama_kost }}
-                          @if($room->tipe_kamar)
-                            <span style="color:var(--text-muted);font-weight:400;"> - </span>Tipe {{ $room->tipe_kamar }}
-                          @endif
-                          <span style="color:var(--text-muted);font-weight:400;"> - </span>No. {{ $room->nomor_kamar }}
-                        </div>
+                  <div class="mb-3">
+                    <label class="detail-label">Pilih Kamar</label>
+                    @if($tersedia > 0)
+                      <div style="max-height:160px;overflow-y:auto;padding-right:4px;">
+                        @foreach($kost->rooms as $r)
+                          <div class="kamar-select-item {{ $r->status_kamar!=='tersedia'?'terisi':'' }}"
+                            id="ki{{ $r->id_room }}"
+                            data-hb="{{ $r->harga_per_bulan }}"
+                            data-hh="{{ $r->harga_harian }}"
+                            data-ab="{{ $r->aktif_bulanan?'1':'0' }}"
+                            data-ah="{{ $r->aktif_harian?'1':'0' }}"
+                            onclick="pilihKamar({{ $r->id_room }}, this)">
+                            <div class="d-flex justify-content-between align-items-center">
+                              <div style="font-size:.8rem;font-weight:700;">No. {{ $r->nomor_kamar }} ({{ $r->tipe_kamar }})</div>
+                              @if($r->status_kamar==='tersedia')<i class="bi bi-circle text-muted" style="font-size:.75rem;"></i>@else<span class="badge bg-danger" style="font-size:.62rem;">Terisi</span>@endif
+                            </div>
+                            <div style="font-size:.72rem;color:#888;margin-top:.15rem;">Ukuran {{ $r->ukuran }} &middot; {{ $r->aktif_bulanan?'Bulanan':'' }} {{ $r->aktif_harian?'& Harian':'' }}</div>
+                          </div>
+                        @endforeach
                       </div>
-                      <div class="text-end">
-                        @if($room->aktif_bulanan && $room->harga_per_bulan)<div style="font-size:.74rem;font-weight:700;color:var(--primary);">Rp {{ number_format($room->harga_per_bulan,0,',','.') }}/bln</div>@endif
-                        @if($room->aktif_harian && $room->harga_harian)<div style="font-size:.68rem;color:#d97706;">Rp {{ number_format($room->harga_harian,0,',','.') }}/hari</div>@endif
-                        <span class="{{ $room->status_kamar==='tersedia'?'status-tersedia':'status-terisi' }}" style="font-size:.64rem;">{{ $room->status_kamar==='tersedia'?'✅ Tersedia':'❌ Terisi' }}</span>
+                    @else
+                      <div class="alert alert-danger py-2 px-3 m-0" style="font-size:.78rem;">Kos ini sudah penuh.</div>
+                    @endif
+                  </div>
+
+                  <div id="wTipe" style="display:none;" class="mb-3">
+                    <label class="detail-label">Tipe Sewa</label>
+                    <div class="d-flex gap-2">
+                      <div class="tipe-durasi-btn" id="btnBln" onclick="pilihTipe('bulanan')">
+                        <div class="tl">Bulanan</div>
+                        <div class="th" id="lhBln">-</div>
+                      </div>
+                      <div class="tipe-durasi-btn" id="btnHar" onclick="pilihTipe('harian')">
+                        <div class="tl">Harian</div>
+                        <div class="th" id="lhHar">-</div>
                       </div>
                     </div>
                   </div>
-                @endforeach
 
-                <div id="wTipe" style="display:none;margin-bottom:.45rem;">
-                  <div style="font-size:.68rem;color:#888;margin-bottom:.28rem;font-weight:600;">⏱️ Tipe Sewa</div>
-                  <div style="display:flex;gap:.38rem;">
-                    <div id="btnBln" class="tipe-durasi-btn active" onclick="pilihTipe('bulanan')"><div class="tl">🗓️ Bulanan</div><div class="th" id="lhBln">-</div></div>
-                    <div id="btnHar" class="tipe-durasi-btn disabled" onclick="pilihTipe('harian')"><div class="tl">📅 Harian</div><div class="th" id="lhHar">-</div></div>
+                  <div id="wJml" style="display:none;" class="mb-3">
+                    <label class="detail-label" id="lblJml">Jumlah</label>
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="d-flex align-items-center gap-2" style="background:#f8fafd;padding:.3rem .5rem;border-radius:.6rem;border:1px solid #edf0f5;">
+                        <button type="button" class="jumlah-btn" onclick="ubahJml(-1)">-</button>
+                        <input type="text" id="jmlDisp" value="1" readonly style="width:35px;text-align:center;border:none;background:transparent;font-weight:800;color:var(--dark);font-size:.88rem;">
+                        <button type="button" class="jumlah-btn" onclick="ubahJml(1)">+</button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div id="wJml" style="display:none;margin-bottom:.45rem;">
-                  <div style="font-size:.68rem;color:#888;margin-bottom:.22rem;font-weight:600;" id="lblJml">📆 Jumlah Bulan</div>
-                  <div style="display:flex;align-items:center;gap:.32rem;">
-                    <button type="button" class="jumlah-btn" onclick="ubahJml(-1)">−</button>
-                    <input type="text" id="jmlDisp" value="1" readonly style="flex:1;text-align:center;border:1px solid var(--card-border);border-radius:.4rem;padding:.36rem;font-size:.82rem;font-weight:700;background:#f8fafd;">
-                    <button type="button" class="jumlah-btn" onclick="ubahJml(1)">+</button>
+
+                  <div id="wTgl" style="display:none;" class="row g-2 mb-3">
+                    <div class="col-7">
+                      <label class="detail-label">Tanggal Masuk</label>
+                      <input type="date" name="tanggal_masuk" id="tglMasuk" class="booking-input">
+                    </div>
+                    <div class="col-5">
+                      <label class="detail-label">Jam (Estimasi)</label>
+                      <input type="time" name="jam_masuk" id="jamMasuk" class="booking-input" value="12:00">
+                    </div>
                   </div>
-                </div>
-                <div id="wTgl" style="display:none;margin-bottom:.45rem;">
-                  <div style="font-size:.68rem;color:#888;margin-bottom:.22rem;font-weight:600;">📅 Tanggal Check-in</div>
-                  <div style="display:flex;gap:.38rem;">
-                    <input type="date" name="tanggal_masuk" id="tglMasuk" class="booking-input" min="{{ date('Y-m-d') }}" required onchange="hitungCO()" style="flex:1;">
-                    <input type="time" name="jam_masuk" id="jamMasuk" class="booking-input" style="width:96px;" onchange="hitungCO()">
+
+                  <div id="wCO" style="display:none;" class="mb-3">
+                    <div style="background:#f0f7ff;border:1px solid #cce3ff;border-radius:.65rem;padding:.65rem .85rem;display:flex;align-items:center;gap:.7rem;">
+                      <i class="bi bi-calendar-event text-primary" style="font-size:1.1rem;"></i>
+                      <div>
+                        <div style="font-size:.68rem;color:#5c728a;font-weight:600;text-transform:uppercase;">Estimasi Selesai</div>
+                        <div style="font-size:.82rem;font-weight:800;color:#0369a1;" id="coDisp">Otomatis dihitung</div>
+                      </div>
+                    </div>
                   </div>
-                  <div style="font-size:.66rem;color:var(--text-muted);margin-top:.18rem;">⏰ WIB</div>
-                </div>
-                <div id="wCO" style="display:none;margin-bottom:.6rem;padding-bottom:.6rem;border-bottom:1px solid #f0f3f8;">
-                  <div style="font-size:.68rem;color:#888;margin-bottom:.22rem;font-weight:600;">🏁 Tanggal Check-out</div>
-                  <div id="coDisp" class="booking-input" style="background:#f8fafd;color:#aaa;">Otomatis dihitung</div>
-                </div>
-                <div id="wRing" style="display:none;margin-bottom:.65rem;">
-                  <div style="font-size:.73rem;font-weight:700;color:#444;margin-bottom:.38rem;">📋 Ringkasan Harga</div>
-                  <div style="background:#f8fafd;border-radius:.58rem;padding:.7rem .85rem;">
-                    <div class="d-flex justify-content-between mb-1" style="font-size:.74rem;"><span style="color:#666;" id="rLabel">-</span><span style="font-weight:600;" id="rHarga">-</span></div>
-                    <div class="d-flex justify-content-between mb-1" style="font-size:.74rem;"><span style="color:#666;">Biaya layanan (5%)</span><span style="font-weight:600;" id="rLayanan">-</span></div>
-                    <div style="border-top:1px solid var(--card-border);margin:.38rem 0;"></div>
-                    <div class="d-flex justify-content-between" style="font-size:.8rem;"><span style="font-weight:700;">Total</span><span style="font-weight:800;color:var(--primary);" id="rTotal">-</span></div>
+
+                  <div id="wRing" style="display:none;background:#f8fafc;border:1px solid #edf2f7;border-radius:.8rem;padding:.9rem;margin-bottom:1.1rem;">
+                    <div class="d-flex justify-content-between mb-2" style="font-size:.8rem;color:#666;">
+                      <span id="rLabel">Sewa</span><span id="rHarga">Rp 0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2" style="font-size:.8rem;color:#666;">
+                      <span>Biaya Layanan</span><span id="rLayanan">Rp 0</span>
+                    </div>
+                    <hr style="margin:.7rem 0;border-top:1px dashed #cbd5e0;">
+                    <div class="d-flex justify-content-between" style="font-size:.9rem;font-weight:800;color:var(--dark);">
+                      <span>Total Pembayaran</span><span id="rTotal" class="text-primary">Rp 0</span>
+                    </div>
                   </div>
+
+                  <button type="submit" id="btnBayar" class="btn-sewa" disabled style="opacity:.6;">Ajukan Sewa</button>
+                  <a href="#" class="btn-tanya" onclick="alert('Fitur chat segera hadir!')">Tanya Pemilik</a>
+
+                </form>
+              @else
+                <div class="alert alert-warning text-center py-3" style="font-size:.8rem;border-radius:.8rem;">
+                  Hanya akun <strong>Pencari Kost</strong> yang bisa melakukan booking.
                 </div>
-                <button type="submit" class="btn-sewa" id="btnBayar" disabled>💳 Ajukan Sewa</button>
-              </form>
-              <button class="btn-tanya" onclick="alert('Fitur chat segera hadir!')">💬 Tanya Pemilik</button>
-              <div style="font-size:.68rem;color:var(--text-muted);line-height:1.6;margin-top:.55rem;">
-                <div>✅ Pembatalan gratis hingga 24 jam sebelum check-in</div>
-                <div>✅ Konfirmasi booking menunggu owner</div>
-                <div>✅ Customer support 24/7</div>
-              </div>
-            @endif
+              @endif
             @else
-              <a href="{{ route('login') }}" class="btn-sewa">🔑 Login untuk Sewa</a>
+              <a href="{{ route('login') }}" class="btn-sewa">Login untuk Booking</a>
+              <div class="text-center mt-2">
+                <span class="text-muted" style="font-size:.75rem;">Belum punya akun? <a href="{{ route('register') }}" style="color:var(--primary);font-weight:700;text-decoration:none;">Daftar Sekarang</a></span>
+              </div>
             @endauth
-            <div style="text-align:center;margin-top:.7rem;font-size:.68rem;color:var(--text-muted);">
-              <i class="bi bi-shield-check text-success me-1"></i> Kost telah diverifikasi admin KostFinder
-            </div>
           </div>
 
-          @if($kost->reviews->count() > 0)
-          <div style="background:#fff;border:1px solid var(--card-border);border-radius:var(--radius);padding:.9rem 1.1rem;margin-bottom:.45rem;box-shadow:0 1px 4px rgba(0,0,0,.05);">
-            <div class="d-flex align-items-center gap-2">
-              <span style="font-size:1.2rem;font-weight:800;color:#f59e0b;">{{ round($kost->reviews->avg('rating'),1) }}</span>
-              <div>
-                <div style="font-size:.73rem;color:#f59e0b;">@for($i=1;$i<=5;$i++)<i class="bi bi-star{{ $i<=round($kost->reviews->avg('rating'))?'-fill':'' }}"></i>@endfor</div>
-                <div style="font-size:.68rem;color:#888;">{{ $kost->reviews->count() }} ulasan</div>
+          {{-- REKOM --}}
+          <div class="price-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="sec-title mb-0" style="font-size:.85rem;">🔥 Kos Serupa</div>
+              <div class="d-flex gap-1">
+                <button class="rekom-nav-btn" id="rkPrev">‹</button>
+                <button class="rekom-nav-btn" id="rkNext">›</button>
               </div>
             </div>
+            <div class="rekom-track" id="rkTrack">
+              @foreach(\App\Models\Kost::where('id_kost','!=',$kost->id_kost)->where('kota',$kost->kota)->take(5)->get() as $rk)
+              <a href="{{ route('kost.show', $rk->id_kost) }}" class="rekom-card">
+                @if($rk->foto_utama)<img src="{{ asset('storage/'.$rk->foto_utama) }}" class="rekom-thumb">@else<div class="rekom-thumb-ph">🏠</div>@endif
+                <div style="padding:.6rem .75rem;">
+                  <div style="font-size:.65rem;font-weight:700;color:var(--primary);text-transform:uppercase;">{{ $rk->tipe_kost }}</div>
+                  <div style="font-size:.78rem;font-weight:800;color:var(--dark);margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $rk->nama_kost }}</div>
+                  <div style="font-size:.8rem;font-weight:800;color:var(--primary);margin-top:.2rem;">Rp {{ number_format($rk->harga_mulai,0,',','.') }}</div>
+                </div>
+              </a>
+              @endforeach
+            </div>
           </div>
-          @endif
 
-          <div style="background:#fff;border:1px solid var(--card-border);border-radius:var(--radius);padding:.7rem;box-shadow:0 1px 4px rgba(0,0,0,.05);">
+          <div style="background:#fff;border:1px solid var(--card-border);border-radius:var(--radius);padding:.7rem;box-shadow:0 1px 4px rgba(0,0,0,.05);margin-top:1rem;">
             <div class="row g-0 text-center">
               <div class="col-6" style="border-right:1px solid #f0f3f8;padding:.45rem 0;">
-                <div style="font-size:1.3rem;font-weight:800;color:var(--primary);">{{ $kost->rooms->where('status_kamar','tersedia')->count() }}</div>
+                <div style="font-size:1.3rem;font-weight:800;color:var(--primary);">{{ $tersedia }}</div>
                 <div style="font-size:.68rem;color:#888;">🔑 Tersedia</div>
               </div>
               <div class="col-6" style="padding:.45rem 0;">
@@ -1315,7 +1235,7 @@ window.hitungCO=function(){
   const tgl=E('tglMasuk')?.value,jam=E('jamMasuk')?.value||'12:00';
   if(E('coDisp')){E('coDisp').textContent='Otomatis dihitung';E('coDisp').style.color='#aaa';}
   if(tgl){const ci=new Date(tgl+'T'+jam+':00'),co=new Date(ci);if(sT==='bulanan')co.setMonth(co.getMonth()+sJ);else co.setDate(co.getDate()+sJ);const s=co.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}),j=String(co.getHours()).padStart(2,'0')+':'+String(co.getMinutes()).padStart(2,'0');if(E('coDisp')){E('coDisp').textContent=`${s}, ${j} WIB`;E('coDisp').style.color='#333';}}
-  if(sHr>0){const sub=sHr*sJ,lyr=Math.round(sub*.05),tot=sub+lyr,sat=sT==='bulanan'?'bulan':'hari';if(E('wRing'))E('wRing').style.display='block';if(E('rLabel'))E('rLabel').textContent=`Harga kamar × ${sJ} ${sat}`;if(E('rHarga'))E('rHarga').textContent='Rp '+sub.toLocaleString('id-ID');if(E('rLayanan'))E('rLayanan').textContent='Rp '+lyr.toLocaleString('id-ID');if(E('rTotal'))E('rTotal').textContent='Rp '+tot.toLocaleString('id-ID');}else{if(E('wRing'))E('wRing').style.display='none';}
+  if(sHr>0){const sub=sHr*sJ,lyr={{ $komisiAdmin }},tot=sub+lyr,sat=sT==='bulanan'?'bulan':'hari';if(E('wRing'))E('wRing').style.display='block';if(E('rLabel'))E('rLabel').textContent=`Harga kamar × ${sJ} ${sat}`;if(E('rHarga'))E('rHarga').textContent='Rp '+sub.toLocaleString('id-ID');if(E('rLayanan'))E('rLayanan').textContent='Rp '+lyr.toLocaleString('id-ID');if(E('rTotal'))E('rTotal').textContent='Rp '+tot.toLocaleString('id-ID');}else{if(E('wRing'))E('wRing').style.display='none';}
   const ok=!!(E('tglMasuk')?.value&&E('sbRoomId')?.value&&sHr>0);const b=E('btnBayar');if(b){b.disabled=!ok;b.style.opacity=ok?'1':'.6';}
 };
 (function(){const it=E('tglMasuk'),ij=E('jamMasuk');if(!it)return;const now=new Date(),utc=now.getTime()+(now.getTimezoneOffset()*60000),jkt=new Date(utc+(7*3600000));const y=jkt.getFullYear(),m=String(jkt.getMonth()+1).padStart(2,'0'),d=String(jkt.getDate()).padStart(2,'0'),h=String(jkt.getHours()).padStart(2,'0'),mn=String(jkt.getMinutes()).padStart(2,'0');it.value=`${y}-${m}-${d}`;it.min=`${y}-${m}-${d}`;if(ij)ij.value=`${h}:${mn}`;})();

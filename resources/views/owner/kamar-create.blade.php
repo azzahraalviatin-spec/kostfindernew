@@ -9,6 +9,7 @@
     .form-label { font-size:.82rem; font-weight:700; color:#344054; margin-bottom:.4rem; }
     .form-control, .form-select { font-size:.85rem; border-color:var(--line); border-radius:.75rem; padding:.65rem .9rem; min-height:46px; }
     .form-control:focus, .form-select:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(232,64,28,.1); }
+    .hover-opacity-100:hover { opacity: 1 !important; transition: .2s; }
 
     /* ── UPLOAD DROP ZONE ── */
     .drop-zone { border:2px dashed #d8e2ef; border-radius:1.1rem; background:#fafcff; padding:2rem 1.5rem; text-align:center; cursor:pointer; transition:all .25s ease; position:relative; overflow:hidden; }
@@ -181,26 +182,45 @@
                 {{-- FASILITAS KAMAR --}}
                 <div class="form-card">
                     <h6><i class="bi bi-check2-square" style="color:var(--primary)"></i> Fasilitas Kamar</h6>
-                    <div class="row g-2">
+                    <div class="row g-2" id="roomFacilityList">
                         @foreach([
-                            '🛏️ Kasur/Springbed','🛏️ Bantal','🛏️ Guling',
-                            '🌬️ AC','❄️ Kipas Angin',
-                            '🚿 Kamar Mandi Dalam','🚿 Water Heater',
-                            '🗄️ Lemari Baju','🪑 Meja & Kursi Belajar',
-                            '📺 TV','📶 WiFi Kamar','🔌 Stop Kontak',
-                            '🪟 Jendela','🪞 Cermin','👔 Gantungan Baju',
-                            '🧹 Sapu & Pel','🗑️ Tempat Sampah',
-                            '🧴 Rak Sepatu','💡 Lampu Belajar',
+                            'Kasur/Springbed','Bantal','Guling',
+                            'AC','Kipas Angin',
+                            'Kamar Mandi Dalam','Water Heater',
+                            'Lemari Baju','Meja & Kursi Belajar',
+                            'TV','WiFi Kamar','Stop Kontak',
+                            'Jendela','Cermin','Gantungan Baju',
+                            'Sapu & Pel','Tempat Sampah',
+                            'Rak Sepatu','Lampu Belajar',
                         ] as $f)
-                            <div class="col-6 col-md-4">
-                                <div class="form-check p-2 border rounded-3" style="font-size:.8rem; background:#f8fafc;">
-                                    <input class="form-check-input ms-0 me-2" type="checkbox"
-                                           name="fasilitas[]" value="{{ $f }}" id="f_{{ $loop->index }}"
-                                           {{ is_array(old('fasilitas')) && in_array($f, old('fasilitas')) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="f_{{ $loop->index }}">{{ $f }}</label>
+                            <div class="col-6 col-md-4" id="rf-item-{{ $loop->index }}">
+                                <div class="form-check p-2 border rounded-3 d-flex align-items-center justify-content-between pe-2" style="font-size:.8rem; background:#f8fafc;">
+                                    <div class="d-flex align-items-center">
+                                        <input class="form-check-input ms-0 me-2" type="checkbox"
+                                               name="fasilitas[]" value="{{ $f }}" id="f_{{ $loop->index }}"
+                                               {{ is_array(old('fasilitas')) && in_array($f, old('fasilitas')) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="f_{{ $loop->index }}">{{ $f }}</label>
+                                    </div>
+                                    <button type="button" class="btn btn-link text-danger p-0 ms-2 opacity-50 hover-opacity-100" onclick="document.getElementById('rf-item-{{ $loop->index }}').remove()" title="Hapus dari daftar">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
                                 </div>
                             </div>
                         @endforeach
+                    </div>
+
+                    {{-- Section untuk input fasilitas kustom --}}
+                    <div class="mt-4 pt-3 border-top">
+                        <label class="form-label" style="font-size:.78rem;color:var(--muted);">Gak nemu fasilitas kamar? Tambah di sini:</label>
+                        <div class="input-group input-group-sm mb-3">
+                            <input type="text" id="customFacInput" class="form-control" placeholder="Contoh: Kulkas Mini, Balkon..." style="border-radius:.6rem 0 0 .6rem;">
+                            <button type="button" class="btn btn-primary px-3" onclick="addCustomFacility()" style="border-radius:0 .6rem .6rem 0;background:var(--primary);border:none;">
+                                <i class="bi bi-plus-lg"></i> Tambah
+                            </button>
+                        </div>
+                        <div id="customFacContainer" class="row g-2 mt-2">
+                            {{-- Fasilitas kustom akan ditambahkan di sini --}}
+                        </div>
                     </div>
                 </div>
 
@@ -219,6 +239,7 @@
                         <div class="dz-hint"><i class="bi bi-info-circle me-1"></i>Maks. <strong>6 foto</strong> &bull; JPG, PNG, WEBP &bull; Maks. <strong>5 MB</strong>/foto</div>
                     </div>
                     <input type="file" name="foto_kamar[]" id="fotoKamarInput" accept="image/jpeg,image/png,image/webp" multiple style="display:none;">
+                    <div id="fotoKamarJudulContainer"></div>
 
                     <div class="foto-info-bar" id="kamarInfoBar" style="display:none;">
                         <div class="foto-info-left"><i class="bi bi-images"></i><span id="kamarInfoText">0 dari 6 foto</span></div>
@@ -382,9 +403,16 @@
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
-                    <div class="preview-info">
-                        ${file.name}
-                        <div class="preview-size">${(file.size/1024/1024).toFixed(2)} MB</div>
+                    <div class="preview-info" style="flex-direction:column; align-items:stretch; gap:4px;">
+                        <input type="text" placeholder="Nama foto, contoh: Ruang Kamar" 
+                               class="form-control form-control-sm" 
+                               style="font-size:.72rem; border-radius:.4rem; height:32px;"
+                               value="${file.judul || ''}"
+                               oninput="syncJudulFoto(${i}, this.value)">
+                        <div class="d-flex justify-content-between mt-1">
+                            <div class="preview-name text-truncate" style="max-width:80px;" title="${file.name}">${file.name}</div>
+                            <div class="preview-size">${(file.size/1024/1024).toFixed(2)} MB</div>
+                        </div>
                     </div>`;
                 previewGrid.appendChild(card);
             };
@@ -392,10 +420,63 @@
         });
     }
 
+    window.syncJudulFoto = function(idx, val) {
+        selectedFiles[idx].judul = val;
+        renderHiddenJuduls();
+    };
+
+    function renderHiddenJuduls() {
+        const container = document.getElementById('fotoKamarJudulContainer');
+        container.innerHTML = '';
+        selectedFiles.forEach((file, i) => {
+            const hidden = document.createElement('input');
+            hidden.type  = 'hidden';
+            hidden.name  = 'foto_kamar_judul[]';
+            hidden.value = file.judul || '';
+            container.appendChild(hidden);
+        });
+    }
+
     window.removeFile = function(idx) {
         selectedFiles.splice(idx, 1);
         syncInput();
         renderPreviews();
+        renderHiddenJuduls();
     };
+
+    function addCustomFacility() {
+        const input = document.getElementById('customFacInput');
+        const val = input.value.trim();
+        if (!val) return;
+
+        // Cek apakah sudah ada di list checkbox standar
+        const existingLabels = Array.from(document.querySelectorAll('.form-check-label')).map(l => l.textContent.trim().toLowerCase());
+        if (existingLabels.includes(val.toLowerCase())) {
+            alert('Fasilitas ini sudah ada di daftar!');
+            input.value = '';
+            return;
+        }
+
+        const container = document.getElementById('customFacContainer');
+        const idx = Date.now();
+
+        const col = document.createElement('div');
+        col.className = 'col-6 col-md-4';
+        col.id = 'custom-fac-' + idx;
+        col.innerHTML = `
+            <div class="form-check p-2 border rounded-3 d-flex align-items-center justify-content-between pe-2" style="font-size:.8rem; background:#fff7f5; border-color:#ffd2c7;">
+                <div class="d-flex align-items-center">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" name="fasilitas[]" value="${val}" id="cf_${idx}" checked>
+                    <label class="form-check-label" for="cf_${idx}">${val}</label>
+                </div>
+                <button type="button" class="btn btn-link text-danger p-0 ms-2" onclick="document.getElementById('custom-fac-${idx}').remove()">
+                    <i class="bi bi-x-circle-fill"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(col);
+        input.value = '';
+        input.focus();
+    }
 </script>
 @endpush

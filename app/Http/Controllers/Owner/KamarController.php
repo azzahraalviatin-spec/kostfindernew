@@ -100,7 +100,7 @@ class KamarController extends Controller
                     RoomImage::create([
                         'room_id'   => $room->id_room,
                         'foto_path' => $path,
-                        'judul'     => null,
+                        'judul'     => $juduls[$idx] ?? null,
                         'tipe_foto' => 'kamar',
                         'is_utama'  => ($idx === 0),
                     ]);
@@ -221,6 +221,15 @@ class KamarController extends Controller
         // Upload foto kamar utama
         $this->syncRoomImages($kamar, $request, true);
 
+        // Update judul foto kamar yang sudah ada
+        if ($request->filled('existing_foto_judul')) {
+            foreach ($request->existing_foto_judul as $id => $judul) {
+                RoomImage::where('id', $id)
+                    ->where('room_id', $kamar->id_room)
+                    ->update(['judul' => $judul]);
+            }
+        }
+
         // Hapus foto fasilitas yang dipilih
         if (!empty($validated['hapus_fasilitas_ids'])) {
             $toDelete = RoomImage::whereIn('id', $validated['hapus_fasilitas_ids'])
@@ -280,12 +289,16 @@ class KamarController extends Controller
         $files         = array_slice($request->file('foto_kamar'), 0, $sisaSlot);
         $isFirstExisting = $existingCount === 0;
 
+        $files         = array_slice($request->file('foto_kamar'), 0, $sisaSlot);
+        $juduls        = $request->input('foto_kamar_judul', []);
+        $isFirstExisting = $existingCount === 0;
+
         foreach ($files as $index => $file) {
             $path = $file->store('kamar', 'public');
             RoomImage::create([
                 'room_id'   => $room->id_room,
                 'foto_path' => $path,
-                'judul'     => null,
+                'judul'     => $juduls[$index] ?? null,
                 'tipe_foto' => 'kamar',
                 'is_utama'  => $isFirstExisting && $index === 0,
             ]);
@@ -336,16 +349,93 @@ class KamarController extends Controller
         abort_if($room->kost->owner_id !== auth()->id(), 403);
     }
     public function bulkUpdate(Request $request)
-{
-    foreach ($request->rooms as $id => $data) {
-        Room::where('id_room', $id)
-            ->whereHas('kost', fn($q) => $q->where('owner_id', auth()->id()))
-            ->update([
-                'nomor_kamar'    => $data['nomor_kamar'],
-                'status_kamar'   => $data['status_kamar'],
-                'harga_per_bulan'=> $data['harga_per_bulan'],
-            ]);
+    {
+        foreach ($request->rooms as $id => $data) {
+            Room::where('id_room', $id)
+                ->whereHas('kost', fn($q) => $q->where('owner_id', auth()->id()))
+                ->update([
+                    'nomor_kamar'    => $data['nomor_kamar'],
+                    'status_kamar'   => $data['status_kamar'],
+                    'harga_per_bulan'=> $data['harga_per_bulan'],
+                ]);
+        }
+        return back()->with('success', 'Semua kamar berhasil diperbarui!');
     }
-    return back()->with('success', 'Semua kamar berhasil diperbarui!');
-}
+
+    public function bulkEditDetail(Request $request)
+    {
+        $ids = explode(',', $request->query('ids'));
+        $rooms = Room::whereIn('id_room', $ids)
+            ->whereHas('kost', fn($q) => $q->where('owner_id', auth()->id()))
+            ->get();
+
+        if ($rooms->isEmpty()) return redirect()->route('owner.kamar.index');
+
+        // Gunakan kamar pertama sebagai template data awal
+        $kamar = $rooms->first();
+        $kosts = Kost::where('owner_id', auth()->id())->get();
+        
+        return view('owner.kamar-bulk-edit', compact('rooms', 'kamar', 'kosts'));
+    }
+
+    public function bulkUpdateDetail(Request $request)
+    {
+        $ids = explode(',', $request->input('ids'));
+        $validated = $request->validate([
+            'tipe_kamar'                => 'nullable|string',
+            'harga_per_bulan'           => 'nullable|numeric|min:0',
+            'harga_harian'              => 'nullable|numeric|min:0',
+            'ukuran'                    => 'nullable|string|max:50',
+            'deskripsi'                 => 'nullable|string',
+            'aturan_kamar'              => 'nullable|string',
+            'listrik'                   => 'nullable|string|max:100',
+            'fasilitas'                 => 'nullable|array',
+            'fasilitas.*'               => 'string',
+            'foto_kamar'                => 'nullable|array',
+            'foto_kamar.*'              => 'image|mimes:jpg,jpeg,png,webp|max:5120',
+        ]);
+
+        $rooms = Room::whereIn('id_room', $ids)
+            ->whereHas('kost', fn($q) => $q->where('owner_id', auth()->id()))
+            ->get();
+
+        foreach ($rooms as $room) {
+            $room->update([
+                'tipe_kamar'      => $validated['tipe_kamar'],
+                'harga_per_bulan' => $validated['harga_per_bulan'] ?? $room->harga_per_bulan,
+                'harga_harian'    => $validated['harga_harian'] ?? $room->harga_harian,
+                'ukuran'          => $validated['ukuran'],
+                'deskripsi'       => $validated['deskripsi'],
+                'aturan_kamar'    => $validated['aturan_kamar'],
+                'listrik'         => $request->input('listrik'),
+                'fasilitas'       => $validated['fasilitas'],
+            ]);
+
+            // Hapus Foto Masal (berdasarkan path)
+            if ($request->filled('hapus_foto_paths')) {
+                foreach ($request->hapus_foto_paths as $path) {
+                    $img = RoomImage::where('room_id', $room->id_room)
+                                   ->where('foto_path', $path)
+                                   ->first();
+                    if ($img) {
+                        // Hapus file fisik hanya sekali saja nanti (atau biarkan di handle sync)
+                        // Untuk amannya, kita hapus record database di setiap room
+                        $img->delete();
+                    }
+                }
+            }
+
+            // Sync Foto Kamar Baru
+            if ($request->hasFile('foto_kamar')) {
+                $this->syncRoomImages($room, $request, false);
+            }
+
+            // Sync Foto Fasilitas Baru
+            if ($request->has('foto_fasilitas')) {
+                $this->syncFasilitasImages($room, $request);
+            }
+        }
+
+        return redirect()->route('owner.kamar.index')->with('success', count($ids) . ' kamar berhasil diperbarui secara masal dengan foto baru!');
+    }
 }

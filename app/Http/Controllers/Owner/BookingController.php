@@ -76,17 +76,10 @@ class BookingController extends Controller
     {
         $booking = $this->findOwnerBooking($booking->getKey());
 
-        // Hitung total harga
-        $totalHarga = $booking->total_harga
-            ?? (($booking->room->harga ?? 0) * ($booking->durasi_sewa ?? 1));
-
-        // ✅ Ambil % komisi dari settings — otomatis ikut yang admin set
-        $settings     = Setting::first();
-        $persenKomisi = (float) ($settings->komisi_admin ?? 10); // default 10% kalau belum diset
-
-        // Hitung komisi & pendapatan owner berdasarkan settings
-        $komisiAdmin     = round($totalHarga * $persenKomisi / 100, 2);
-        $pendapatanOwner = round($totalHarga - $komisiAdmin, 2);
+        // Pendapatan owner adalah harga sewa murni (karena biaya layanan admin sudah dibayar penyewa di luar harga sewa)
+        $totalHarga      = $booking->total_harga;
+        $komisiAdmin     = $booking->komisi_admin;
+        $pendapatanOwner = $totalHarga;
 
         // Update status booking + catat pendapatan
         $booking->update([
@@ -98,12 +91,10 @@ class BookingController extends Controller
         // ✅ Update status kamar jadi terisi
         $booking->room->update(['status_kamar' => 'terisi']);
 
-        $sisaPersen = 100 - $persenKomisi;
-
         return back()->with('success',
             'Booking selesai! Pendapatan Rp ' .
             number_format($pendapatanOwner, 0, ',', '.') .
-            " ({$sisaPersen}%) berhasil dicatat!"
+            " berhasil dicatat!"
         );
     }
 

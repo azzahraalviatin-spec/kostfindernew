@@ -161,6 +161,17 @@
         </div>
       @endif
 
+      @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show mb-3" style="font-size:.83rem;border-radius:.7rem;">
+          <ul class="mb-0 ps-3">
+            @foreach($errors->all() as $error)
+              <li>{{ $error }}</li>
+            @endforeach
+          </ul>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      @endif
+
       <div class="layout-2col">
 
         {{-- ==================== KOLOM KIRI ==================== --}}
@@ -592,15 +603,8 @@
           <select name="nama_bank" class="form-select form-control" required>
             <option value="">-- Pilih Bank --</option>
             @foreach([
-              'Bank BCA', 'Bank Mandiri', 'Bank BRI', 'Bank BNI', 'Bank Syariah Indonesia (BSI)',
-              'Bank BTN', 'Bank CIMB Niaga', 'Bank Permata', 'Bank Danamon', 'Bank Maybank',
-              'Bank Mega', 'Bank OCBC NISP', 'Bank Panin', 'Bank Bukopin', 'Bank Jatim',
-              'Bank Jateng', 'Bank Jabar Banten (BJB)', 'Bank DKI', 'Bank Sumut', 'Bank Nagari',
-              'Bank Riau Kepri', 'Bank Sumsel Babel', 'Bank Lampung', 'Bank Kalsel', 'Bank Kalbar',
-              'Bank Kaltimtara', 'Bank Kalteng', 'Bank Sulselbar', 'Bank SulutGo', 'Bank NTB Syariah',
-              'Bank NTT', 'Bank Maluku Malut', 'Bank Papua', 'Bank Bengkulu', 'Bank Sulteng',
-              'Bank Sultra', 'Bank BTPN', 'Bank Jenius', 'Bank Neo Commerce', 'Bank Seabank',
-              'Bank Aladin', 'Bank Jago', 'DANA', 'OVO', 'GoPay', 'LinkAja', 'ShopeePay'
+              'BRI', 'Mandiri', 'BNI', 'BTN', 'BCA', 'Bank Syariah Indonesia (BSI)', 'Seabank',
+              'GoPay', 'OVO', 'DANA', 'ShopeePay', 'LinkAja'
             ] as $b)
             <option value="{{ $b }}">{{ $b }}</option>
             @endforeach
@@ -636,23 +640,26 @@
                 <div class="col-12">
                   <label class="form-label">Password Lama</label>
                   <div class="input-group">
-                    <input type="password" name="current_password" class="form-control" placeholder="Masukkan password lama" id="pwLama">
+                    <input type="password" name="current_password" class="form-control" placeholder="Masukkan password lama" id="pwLama" required>
                     <button type="button" class="btn btn-outline-secondary" onclick="togglePw('pwLama')"><i class="bi bi-eye"></i></button>
                   </div>
+                  @error('current_password') <div class="text-danger mt-1" style="font-size:.7rem;">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Password Baru</label>
                   <div class="input-group">
-                    <input type="password" name="password" class="form-control" placeholder="Min. 8 karakter" id="pwBaru">
+                    <input type="password" name="password" class="form-control" placeholder="Min. 8 karakter" id="pwBaru" required>
                     <button type="button" class="btn btn-outline-secondary" onclick="togglePw('pwBaru')"><i class="bi bi-eye"></i></button>
                   </div>
+                  @error('password') <div class="text-danger mt-1" style="font-size:.7rem;">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Konfirmasi Password Baru</label>
                   <div class="input-group">
-                    <input type="password" name="password_confirmation" class="form-control" placeholder="Ulangi password baru" id="pwKonfirm">
+                    <input type="password" name="password_confirmation" class="form-control" placeholder="Ulangi password baru" id="pwKonfirm" required>
                     <button type="button" class="btn btn-outline-secondary" onclick="togglePw('pwKonfirm')"><i class="bi bi-eye"></i></button>
                   </div>
+                  @error('password_confirmation') <div class="text-danger mt-1" style="font-size:.7rem;">{{ $message }}</div> @enderror
                 </div>
               </div>
               <div class="mt-3">

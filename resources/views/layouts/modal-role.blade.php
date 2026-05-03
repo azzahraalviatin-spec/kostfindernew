@@ -15,7 +15,7 @@
     display: flex; align-items: center;
     gap: 10px; margin-bottom: 18px;
   }
-  .kf-brand-icon {
+  .kf-modal-brand-icon {
     width: 34px; height: 34px;
     background: #E8401C; border-radius: 9px;
     display: flex; align-items: center; justify-content: center;
@@ -123,7 +123,7 @@
       <div class="kf-modal-header-dark">
         <button type="button" class="kf-close-dark" data-bs-dismiss="modal">✕</button>
         <div class="kf-brand-row">
-          <div class="kf-brand-icon">
+          <div class="kf-modal-brand-icon">
             <svg width="18" height="18" viewBox="0 0 34 34" fill="none">
               <path d="M17 5L5 14.2V29H13V22H21V29H29V14.2L17 5Z" fill="white" opacity=".95"/>
               <rect x="14" y="22" width="6" height="7" rx="1" fill="#E8401C"/>

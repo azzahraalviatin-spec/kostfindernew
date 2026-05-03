@@ -124,6 +124,8 @@ return view('cari-kost', compact('kosts', 'kostsMap'));
             ->take(6)
             ->get();
 
-        return view('kost.show', compact('kost', 'rekomendasi'));
+        $settings = \App\Models\Setting::first();
+        $komisiAdmin = (int) ($settings->komisi_admin ?? 10000);
+        return view('kost.show', compact('kost', 'rekomendasi', 'komisiAdmin'));
     }
 }

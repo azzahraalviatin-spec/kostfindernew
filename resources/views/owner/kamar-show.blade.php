@@ -6,6 +6,7 @@
   <title>Detail Kamar - KostFinder</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
   <style>
     :root { --primary:#e8401c; --primary2:#ff7043; --dark:#1e2d3d; --muted:#8a97a8; --line:#e8edf3; --sidebar-w:250px; --topbar-h:64px; }
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
@@ -105,14 +106,19 @@
           <h6><i class="bi bi-images"></i> Foto Kamar</h6>
 
           @if($fotoKamar && $fotoKamar->count())
-            <img id="fotoUtama"
-                 src="{{ asset('storage/' . $fotoKamar->first()->foto_path) }}"
-                 class="foto-main mb-3" alt="Foto kamar">
+            <a href="{{ asset('storage/' . $fotoKamar->first()->foto_path) }}" class="glightbox" data-gallery="kamar-gallery" id="mainLightboxLink">
+              <img id="fotoUtama"
+                   src="{{ asset('storage/' . $fotoKamar->first()->foto_path) }}"
+                   class="foto-main mb-3" alt="Foto kamar">
+            </a>
             <div class="d-flex flex-wrap gap-2">
               @foreach($fotoKamar as $idx => $img)
-                <img src="{{ asset('storage/' . $img->foto_path) }}"
-                     class="foto-thumb {{ $idx === 0 ? 'active' : '' }}"
-                     alt="thumb" onclick="gantiPhoto(this)">
+                <a href="{{ asset('storage/' . $img->foto_path) }}" class="glightbox" data-gallery="kamar-gallery" 
+                   onclick="gantiPhoto(this.querySelector('img')); event.preventDefault();">
+                  <img src="{{ asset('storage/' . $img->foto_path) }}"
+                       class="foto-thumb {{ $idx === 0 ? 'active' : '' }}"
+                       alt="thumb">
+                </a>
               @endforeach
             </div>
           @else
@@ -248,9 +254,22 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
   <script>
+    // ── GLIGHTBOX ──
+    const lightbox = GLightbox({
+      selector: '.glightbox',
+      touchNavigation: true,
+      loop: true,
+      zoomable: true
+    });
+
     function gantiPhoto(el) {
       document.getElementById('fotoUtama').src = el.src;
+      
+      const link = document.getElementById('mainLightboxLink');
+      if (link) link.href = el.src;
+
       document.querySelectorAll('.foto-thumb').forEach(t => t.classList.remove('active'));
       el.classList.add('active');
     }

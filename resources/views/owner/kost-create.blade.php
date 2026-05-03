@@ -69,6 +69,7 @@
 
     /* ── FORM CARD ── */
     .form-card { background: #fff; border-radius: 1rem; border: 1px solid var(--line); box-shadow: 0 6px 20px rgba(0,0,0,.04); padding: 1.5rem; margin-bottom: 1rem; }
+    .hover-opacity-100:hover { opacity: 1 !important; transition: .2s; }
     .form-card h6 { font-weight: 800; color: var(--dark); font-size: .95rem; margin-bottom: 1rem; padding-bottom: .8rem; border-bottom: 1px solid #f0f3f8; display: flex; align-items: center; gap: .4rem; }
     .form-label { font-size: .82rem; font-weight: 700; color: #344054; margin-bottom: .35rem; }
     .form-control, .form-select { font-size: .85rem; border-color: var(--line); border-radius: .75rem; padding: .65rem .9rem; min-height: 46px; }
@@ -273,17 +274,36 @@
             <div class="form-card">
               <h6><i class="bi bi-check2-square" style="color:var(--primary)"></i> Fasilitas Umum Kost</h6>
               <p style="font-size:.76rem;color:var(--muted);margin-top:-.5rem;margin-bottom:.85rem;">Pilih fasilitas yang digunakan bersama seluruh penghuni.</p>
-              <div class="row g-2">
+              <div class="row g-2" id="facilityList">
                 @foreach(['WiFi/Internet','Parkir Motor','Parkir Mobil','Air Minum','Dapur','Laundry','CCTV','Mushola','Ruang Tamu','Jemuran','Ruang Santai','Keamanan 24 Jam'] as $f)
-                  <div class="col-6 col-md-4">
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" name="fasilitas[]"
-                             value="{{ $f }}" id="f_{{ $loop->index }}"
-                             {{ is_array(old('fasilitas')) && in_array($f, old('fasilitas')) ? 'checked' : '' }}>
-                      <label class="form-check-label" for="f_{{ $loop->index }}">{{ $f }}</label>
+                  <div class="col-6 col-md-4" id="fac-item-{{ $loop->index }}">
+                    <div class="form-check d-flex align-items-center justify-content-between pe-2">
+                      <div class="d-flex align-items-center">
+                        <input class="form-check-input" type="checkbox" name="fasilitas[]"
+                               value="{{ $f }}" id="f_{{ $loop->index }}"
+                               {{ is_array(old('fasilitas')) && in_array($f, old('fasilitas')) ? 'checked' : '' }}>
+                        <label class="form-check-label ms-2" for="f_{{ $loop->index }}">{{ $f }}</label>
+                      </div>
+                      <button type="button" class="btn btn-link text-danger p-0 ms-2 opacity-50 hover-opacity-100" onclick="document.getElementById('fac-item-{{ $loop->index }}').remove()" title="Hapus dari daftar">
+                        <i class="bi bi-x-circle"></i>
+                      </button>
                     </div>
                   </div>
                 @endforeach
+              </div>
+
+              {{-- Section untuk input fasilitas kustom --}}
+              <div class="mt-4 pt-3 border-top">
+                <label class="form-label" style="font-size:.78rem;color:var(--muted);">Gak nemu fasilitasmu? Tambah sendiri di sini:</label>
+                <div class="input-group input-group-sm">
+                  <input type="text" id="customFacInput" class="form-control" placeholder="Contoh: Kolam Renang, Smart TV..." style="border-radius:.6rem 0 0 .6rem;">
+                  <button type="button" class="btn btn-primary px-3" onclick="addCustomFacility()" style="border-radius:0 .6rem .6rem 0;background:var(--primary);border:none;">
+                    <i class="bi bi-plus-lg"></i> Tambah
+                  </button>
+                </div>
+                <div id="customFacContainer" class="row g-2 mt-2">
+                  {{-- Fasilitas kustom akan ditambahkan di sini --}}
+                </div>
               </div>
             </div>
 
@@ -941,6 +961,41 @@
         row.style.transition = 'all .25s ease';
         setTimeout(() => row.remove(), 250);
       }
+    }
+
+    function addCustomFacility() {
+      const input = document.getElementById('customFacInput');
+      const val = input.value.trim();
+      if (!val) return;
+
+      // Cek apakah sudah ada di list checkbox standar
+      const existingLabels = Array.from(document.querySelectorAll('.form-check-label')).map(l => l.textContent.trim().toLowerCase());
+      if (existingLabels.includes(val.toLowerCase())) {
+        alert('Fasilitas ini sudah ada di daftar!');
+        input.value = '';
+        return;
+      }
+
+      const container = document.getElementById('customFacContainer');
+      const idx = Date.now();
+
+      const col = document.createElement('div');
+      col.className = 'col-6 col-md-4';
+      col.id = 'custom-fac-' + idx;
+      col.innerHTML = `
+        <div class="form-check d-flex align-items-center justify-content-between pe-2" style="background:#fff7f5; border-color:#ffd2c7;">
+          <div class="d-flex align-items-center">
+            <input class="form-check-input" type="checkbox" name="fasilitas[]" value="${val}" id="cf_${idx}" checked>
+            <label class="form-check-label ms-2" for="cf_${idx}">${val}</label>
+          </div>
+          <button type="button" class="btn btn-link text-danger p-0 ms-2" onclick="document.getElementById('custom-fac-${idx}').remove()">
+            <i class="bi bi-x-circle-fill"></i>
+          </button>
+        </div>
+      `;
+      container.appendChild(col);
+      input.value = '';
+      input.focus();
     }
   </script>
 </body>

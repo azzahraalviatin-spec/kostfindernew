@@ -102,11 +102,11 @@ class BookingController extends Controller
 
         $totalHarga = $hargaSatuan * $jumlahDurasi;
 
-        // ── FIX: Ambil Biaya Layanan Flat (Bukan Persen Lagi) ──
+        // ── AMBIL BIAYA LAYANAN FLAT DARI SETTINGS ──
         $settings     = \App\Models\Setting::first();
         $biayaLayanan = ($settings && $settings->komisi_admin > 0)
             ? (int) $settings->komisi_admin
-            : 15000;  // Default 15rb jika kosong
+            : 10000; // Default 10rb jika admin belum set di pengaturan
 
         $komisiAdmin     = $biayaLayanan;
         $totalBayar      = $totalHarga + $komisiAdmin;
@@ -172,17 +172,17 @@ class BookingController extends Controller
             $booking->refresh();
         }
 
-        // Ambil persen komisi dari settings
+        // Ambil nominal biaya layanan dari settings
         $settings     = \App\Models\Setting::first();
-        $persenKomisi = ($settings && $settings->komisi_admin > 0)
-            ? $settings->komisi_admin
-            : 10;
+        $biayaLayanan = ($settings && $settings->komisi_admin > 0)
+            ? (int) $settings->komisi_admin
+            : 10000;
 
         // Ambil rekening owner
         $ownerId = $booking->room->kost->owner_id;
         $bankAccounts = \App\Models\OwnerBankAccount::where('user_id', $ownerId)->get();
 
-        return view('user.booking-bayar', compact('booking', 'persenKomisi', 'bankAccounts'));
+        return view('user.booking-bayar', compact('booking', 'biayaLayanan', 'bankAccounts'));
     }
 
     public function bayar(Request $request, $id)

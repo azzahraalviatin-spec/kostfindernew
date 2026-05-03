@@ -152,10 +152,12 @@
                         <h6 class="fw-bold mb-0"><i class="bi bi-cash-coin me-2"></i>Pengaturan Bisnis</h6>
                     </div>
                     <div class="card-body p-4">
-                        <label class="form-label text-muted small fw-bold">Biaya Layanan Platform (%)</label>
+                        <label class="form-label text-muted small fw-bold">Biaya Layanan Platform (Rp)</label>
                         <div class="input-group mb-2">
-                            <span class="input-group-text bg-primary text-white border-0 fw-bold">%</span>
-                            <input type="number" name="komisi_admin" class="form-control fs-4 fw-bold text-primary" value="{{ (int)($settings->komisi_admin ?? 0) }}">
+                            <span class="input-group-text bg-primary text-white border-0 fw-bold">Rp</span>
+                            <input type="text" name="komisi_admin" class="form-control fs-4 fw-bold text-primary" 
+                                   value="{{ number_format($settings->komisi_admin ?? 0, 0, ',', '.') }}"
+                                   oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');">
                         </div>
                         <p class="text-muted small">Biaya tetap yang kaka dapet dari setiap transaksi booking (Flat Fee).</p>
                     </div>

@@ -4,6 +4,20 @@
 @section('page_title', 'Monitoring Data Owner')
 @section('page_subtitle', 'Kelola akun pemilik kos: verifikasi, status, dan properti')
 
+@push('styles')
+<style>
+  /* Fix giant pagination icons */
+  .pagination svg {
+    width: 20px !important;
+    height: 20px !important;
+    display: inline-block !important;
+  }
+  .pagination .flex.justify-between.flex-1 {
+    display: none !important; /* Hide tailwind mobile pagination */
+  }
+</style>
+@endpush
+
 @section('content')
 
 @if(session('status'))

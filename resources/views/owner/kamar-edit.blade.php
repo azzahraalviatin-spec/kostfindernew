@@ -7,6 +7,7 @@
     .form-card { background:#fff; border-radius:1rem; border:1px solid var(--line); box-shadow:0 6px 20px rgba(0,0,0,.04); padding:1.5rem; margin-bottom:1.5rem; }
     .form-card h6 { font-weight:800; color:var(--dark); font-size:.95rem; margin-bottom:1.2rem; padding-bottom:.8rem; border-bottom:1px solid #f0f3f8; display:flex; align-items:center; gap:.5rem; }
     .form-label { font-size:.82rem; font-weight:700; color:#344054; margin-bottom:.4rem; }
+    .hover-opacity-100:hover { opacity: 1 !important; transition: .2s; }
     .form-control, .form-select { font-size:.85rem; border-color:var(--line); border-radius:.75rem; padding:.65rem .9rem; min-height:46px; }
     .form-control:focus, .form-select:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(232,64,28,.1); }
     
@@ -99,38 +100,62 @@
             <div class="form-card">
               <h6><i class="bi bi-check2-square" style="color:var(--primary)"></i> Fasilitas Kamar</h6>
               @php $fasilitasList = is_array($kamar->fasilitas) ? $kamar->fasilitas : []; @endphp
-              <div class="row g-2">
-                @foreach([
-                  '🛏️ Kasur/Springbed',
-                  '🛏️ Bantal',
-                  '🛏️ Guling',
-                  '🌬️ AC',
-                  '❄️ Kipas Angin',
-                  '🚿 Kamar Mandi Dalam',
-                  '🚿 Water Heater',
-                  '🗄️ Lemari Baju',
-                  '🪑 Meja & Kursi Belajar',
-                  '📺 TV',
-                  '📶 WiFi Kamar',
-                  '🔌 Stop Kontak',
-                  '🪟 Jendela',
-                  '🪞 Cermin',
-                  '👔 Gantungan Baju',
-                  '🧹 Sapu & Pel',
-                  '🗑️ Tempat Sampah',
-                 
-                  '🧴 Rak Sepatu',
-                  '💡 Lampu Belajar',
-                ] as $f)
-                  <div class="col-6 col-md-4">
-                    <div class="form-check p-2 border rounded-3" style="font-size:.8rem; background:#f8fafc;">
-                      <input class="form-check-input ms-0 me-2" type="checkbox" name="fasilitas[]" value="{{ $f }}"
-                             id="f_{{ $loop->index }}"
-                             {{ in_array($f, $fasilitasList) ? 'checked' : '' }}>
-                      <label class="form-check-label" for="f_{{ $loop->index }}">{{ $f }}</label>
+              @php
+                $standardRoomFac = [
+                  'Kasur/Springbed','Bantal','Guling',
+                  'AC','Kipas Angin',
+                  'Kamar Mandi Dalam','Water Heater',
+                  'Lemari Baju','Meja & Kursi Belajar',
+                  'TV','WiFi Kamar','Stop Kontak',
+                  'Jendela','Cermin','Gantungan Baju',
+                  'Sapu & Pel','Tempat Sampah',
+                  'Rak Sepatu','Lampu Belajar',
+                ];
+                $fasilitasKustomKamar = array_diff($fasilitasList, $standardRoomFac);
+              @endphp
+              <div class="row g-2" id="roomFacilityList">
+                @foreach($standardRoomFac as $f)
+                  <div class="col-6 col-md-4" id="rf-item-{{ $loop->index }}">
+                    <div class="form-check p-2 border rounded-3 d-flex align-items-center justify-content-between pe-2" style="font-size:.8rem; background:#f8fafc;">
+                      <div class="d-flex align-items-center">
+                        <input class="form-check-input ms-0 me-2" type="checkbox" name="fasilitas[]" value="{{ $f }}"
+                               id="f_{{ $loop->index }}"
+                               {{ in_array($f, $fasilitasList) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="f_{{ $loop->index }}">{{ $f }}</label>
+                      </div>
+                      <button type="button" class="btn btn-link text-danger p-0 ms-2 opacity-50 hover-opacity-100" onclick="document.getElementById('rf-item-{{ $loop->index }}').remove()" title="Hapus dari daftar">
+                        <i class="bi bi-x-circle"></i>
+                      </button>
                     </div>
                   </div>
                 @endforeach
+              </div>
+
+              {{-- Section untuk input fasilitas kustom --}}
+              <div class="mt-4 pt-3 border-top">
+                <label class="form-label" style="font-size:.78rem;color:var(--muted);">Gak nemu fasilitas kamar? Tambah di sini:</label>
+                <div class="input-group input-group-sm mb-3">
+                  <input type="text" id="customFacInput" class="form-control" placeholder="Contoh: Kulkas Mini, Balkon..." style="border-radius:.6rem 0 0 .6rem;">
+                  <button type="button" class="btn btn-primary px-3" onclick="addCustomFacility()" style="border-radius:0 .6rem .6rem 0;background:var(--primary);border:none;">
+                    <i class="bi bi-plus-lg"></i> Tambah
+                  </button>
+                </div>
+                
+                <div id="customFacContainer" class="row g-2 mt-2">
+                  @foreach($fasilitasKustomKamar as $fk)
+                    <div class="col-6 col-md-4" id="custom-fac-old-{{ $loop->index }}">
+                      <div class="form-check p-2 border rounded-3 d-flex align-items-center justify-content-between pe-2" style="font-size:.8rem; background:#fff7f5; border-color:#ffd2c7;">
+                        <div class="d-flex align-items-center">
+                          <input class="form-check-input ms-0 me-2" type="checkbox" name="fasilitas[]" value="{{ $fk }}" id="cf_old_{{ $loop->index }}" checked>
+                          <label class="form-check-label" for="cf_old_{{ $loop->index }}">{{ $fk }}</label>
+                        </div>
+                        <button type="button" class="btn btn-link text-danger p-0 ms-2" onclick="document.getElementById('custom-fac-old-{{ $loop->index }}').remove()">
+                          <i class="bi bi-x-circle-fill"></i>
+                        </button>
+                      </div>
+                    </div>
+                  @endforeach
+                </div>
               </div>
             </div>
 
@@ -161,7 +186,7 @@
                       <div class="preview-info">
                         <input type="text" name="existing_foto_judul[{{ $img->id }}]" 
                                class="preview-label-input" 
-                               placeholder="Label (contoh: Kasur, Meja...)"
+                               placeholder="Nama foto, contoh: Ruang Kamar"
                                value="{{ $img->judul }}">
                       </div>
                     </div>
@@ -243,7 +268,7 @@
               </div>
               <div class="preview-info">
                 <input type="text" 
-                       placeholder="Label (contoh: Kasur, Meja...)" 
+                       placeholder="Nama foto, contoh: Ruang Kamar" 
                        class="preview-label-input" 
                        value="${window._judulFotoValues[i] || ''}"
                        oninput="syncJudulFoto(${i}, this.value)">
@@ -286,6 +311,41 @@
     card.style.position = 'relative';
     card.appendChild(label);
   }
+}
+
+function addCustomFacility() {
+  const input = document.getElementById('customFacInput');
+  const val = input.value.trim();
+  if (!val) return;
+
+  // Cek apakah sudah ada di list checkbox standar
+  const existingLabels = Array.from(document.querySelectorAll('.form-check-label')).map(l => l.textContent.trim().toLowerCase());
+  if (existingLabels.includes(val.toLowerCase())) {
+    alert('Fasilitas ini sudah ada di daftar!');
+    input.value = '';
+    return;
+  }
+
+  const container = document.getElementById('customFacContainer');
+  const idx = Date.now();
+
+  const col = document.createElement('div');
+  col.className = 'col-6 col-md-4';
+  col.id = 'custom-fac-' + idx;
+  col.innerHTML = `
+    <div class="form-check p-2 border rounded-3 d-flex align-items-center justify-content-between pe-2" style="font-size:.8rem; background:#fff7f5; border-color:#ffd2c7;">
+      <div class="d-flex align-items-center">
+        <input class="form-check-input ms-0 me-2" type="checkbox" name="fasilitas[]" value="${val}" id="cf_${idx}" checked>
+        <label class="form-check-label" for="cf_${idx}">${val}</label>
+      </div>
+      <button type="button" class="btn btn-link text-danger p-0 ms-2" onclick="document.getElementById('custom-fac-${idx}').remove()">
+        <i class="bi bi-x-circle-fill"></i>
+      </button>
+    </div>
+  `;
+  container.appendChild(col);
+  input.value = '';
+  input.focus();
 }
 </script>
 @endpush

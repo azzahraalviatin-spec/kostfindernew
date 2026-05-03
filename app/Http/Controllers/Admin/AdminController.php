@@ -26,13 +26,13 @@ use App\Notifications\ReviewBaruNotification;
 class AdminController extends Controller
 {
     // ════════════════════════════════════════════════════════════
-    // HELPER: ambil persentase komisi dari settings
+    // HELPER: ambil nominal biaya layanan (Flat Fee) dari settings
     // Dipakai di mana saja yang butuh hitung komisi_admin
     // ════════════════════════════════════════════════════════════
-    private function getKomisiPersen(): float
+    private function getKomisiFlat(): float
     {
         $settings = Setting::first();
-        return (float) ($settings->komisi_admin ?? 10); // default 10% kalau belum diset
+        return (float) ($settings->komisi_admin ?? 10000); // default Rp 10.000 kalau belum diset
     }
 
     // ════════════════════════════════════════════════════════════
@@ -606,7 +606,7 @@ class AdminController extends Controller
             'old_password' => 'nullable|string',
             'password'     => 'nullable|confirmed|min:6',
             // ✅ Validasi komisi: angka 0-100
-            'komisi_admin' => 'nullable|numeric|min:0|max:100',
+            'komisi_admin' => 'nullable|numeric|min:0',
         ]);
 
         // Update profil admin
@@ -640,8 +640,9 @@ class AdminController extends Controller
         $settings->facebook_link  = $request->facebook_link;
         $settings->alamat_kantor  = $request->alamat_kantor;
 
-        // ✅ komisi_admin tersimpan sebagai persentase (misal: 20 = 20%)
-        $settings->komisi_admin   = $request->komisi_admin ?? $settings->komisi_admin ?? 10;
+        // ✅ komisi_admin tersimpan sebagai nominal Rupiah tetap (Flat Fee)
+        $komisiRaw = str_replace('.', '', $request->komisi_admin);
+        $settings->komisi_admin   = ($komisiRaw !== null && $komisiRaw !== '') ? $komisiRaw : ($settings->komisi_admin ?? 10000);
         $settings->save();
 
         return back()->with('success', 'Pengaturan berhasil disimpan!');

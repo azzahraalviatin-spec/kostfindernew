@@ -486,6 +486,11 @@
   Swal.fire({ icon:'error', title:'Oops...', text:'{{ session('error') }}', confirmButtonColor:'#E8401C' });
 </script>
 @endif
+@if($errors->any())
+<script>
+  Swal.fire({ icon:'error', title:'Periksa Kembali', text:'{{ $errors->first() }}', confirmButtonColor:'#E8401C' });
+</script>
+@endif
 
 @yield('scripts')
 </body>

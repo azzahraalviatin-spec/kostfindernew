@@ -10,6 +10,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
 
   <style>
     :root {
@@ -438,12 +439,14 @@
               @if($kost->images->isNotEmpty())
                 {{-- Foto Utama --}}
                 <div style="position:relative;border-radius:1rem;overflow:hidden;margin-bottom:.6rem;">
-                  <img id="mainPreview"
-                       src="{{ asset('storage/' . $kost->images->first()->image_path) }}"
-                       class="main-photo"
-                       style="height:240px;">
+                  <a href="{{ asset('storage/' . $kost->images->first()->image_path) }}" class="glightbox" data-gallery="kost-gallery" id="mainLightboxLink">
+                    <img id="mainPreview"
+                         src="{{ asset('storage/' . $kost->images->first()->image_path) }}"
+                         class="main-photo"
+                         style="height:240px;">
+                  </a>
                   @if($kost->images->first()->kategori)
-                    <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,.65),transparent);padding:.7rem .9rem;">
+                    <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,.65),transparent);padding:.7rem .9rem;pointer-events:none;">
                       <span style="color:#fff;font-size:.78rem;font-weight:700;"><i class="bi bi-tag-fill me-1"></i>{{ $kost->images->first()->kategori }}</span>
                     </div>
                   @endif
@@ -452,12 +455,15 @@
                 <div class="row g-2">
                   @foreach($kost->images as $img)
                     <div class="col-4">
-                      <div style="position:relative;border-radius:.75rem;overflow:hidden;cursor:pointer;" onclick="changeMainPhoto('{{ asset('storage/'.$img->image_path) }}', this)">
-                        <img src="{{ asset('storage/'.$img->image_path) }}"
-                             class="thumb-photo"
-                             style="height:80px;">
+                      <div style="position:relative;border-radius:.75rem;overflow:hidden;cursor:pointer;">
+                        <a href="{{ asset('storage/'.$img->image_path) }}" class="glightbox" data-gallery="kost-gallery" 
+                           onclick="changeMainPhoto('{{ asset('storage/'.$img->image_path) }}', this.parentElement); event.preventDefault();">
+                          <img src="{{ asset('storage/'.$img->image_path) }}"
+                               class="thumb-photo"
+                               style="height:80px;">
+                        </a>
                         @if($img->kategori)
-                          <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);padding:.18rem .4rem;text-align:center;">
+                          <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);padding:.18rem .4rem;text-align:center;pointer-events:none;">
                             <span style="color:#fff;font-size:.64rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">{{ $img->kategori }}</span>
                           </div>
                         @endif
@@ -626,8 +632,10 @@
                     <div style="position:relative;border-radius:.75rem;overflow:hidden;border:1.5px solid var(--line);background:#f8fafc;box-shadow:0 2px 10px rgba(0,0,0,.05);transition:.2s;" id="fac-item-{{ $fac->id }}"
                          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,.1)'"
                          onmouseout="this.style.transform='none';this.style.boxShadow='0 2px 10px rgba(0,0,0,.05)'">
-                      <img src="{{ asset('storage/'.$fac->foto) }}" alt="{{ $fac->nama }}"
-                           style="width:100%;height:90px;object-fit:cover;display:block;">
+                      <a href="{{ asset('storage/'.$fac->foto) }}" class="glightbox" data-gallery="fasilitas-gallery" data-glightbox="title: {{ $fac->nama }}">
+                        <img src="{{ asset('storage/'.$fac->foto) }}" alt="{{ $fac->nama }}"
+                             style="width:100%;height:90px;object-fit:cover;display:block;">
+                      </a>
                       <div style="padding:.45rem .55rem;border-top:1px solid #f0f3f8;">
                         <div style="font-size:.72rem;font-weight:700;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                           {{ $fac->nama }}
@@ -747,6 +755,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
 
   <script>
     // ── SIDEBAR TOGGLE ──
@@ -761,10 +770,22 @@
       }
     }
 
+    // ── GLIGHTBOX INITIALIZATION ──
+    const lightbox = GLightbox({
+      selector: '.glightbox',
+      touchNavigation: true,
+      loop: true,
+      zoomable: true
+    });
+
     // ── GANTI FOTO UTAMA ──
     function changeMainPhoto(src, thumbEl) {
       const el = document.getElementById('mainPreview');
       if (el) el.src = src;
+      
+      const link = document.getElementById('mainLightboxLink');
+      if (link) link.href = src;
+
       // Ambil label dari thumbnail yang diklik
       const mainWrap = el ? el.closest('div[style*="border-radius:1rem"]') || el.parentElement : null;
       if (mainWrap) {

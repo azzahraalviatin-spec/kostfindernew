@@ -102,11 +102,21 @@
       </div>
       <div class="form-row-item">
         <div class="form-row-label">Nomor HP</div>
-        <div class="form-row-input"><input type="text" name="no_hp" value="{{ old('no_hp', auth()->user()->no_hp) }}" placeholder="+62 xxxx xxxx"></div>
+        <div class="form-row-input">
+          <input type="text" name="no_hp" value="{{ old('no_hp', auth()->user()->no_hp) }}" placeholder="+62 xxxx xxxx">
+          @error('no_hp')
+            <div style="color: #dc2626; font-size: 0.75rem; margin-top: 0.25rem;">{{ $message }}</div>
+          @enderror
+        </div>
       </div>
       <div class="form-row-item">
         <div class="form-row-label">Nomor Kontak Darurat</div>
-        <div class="form-row-input"><input type="text" name="kontak_darurat" value="{{ old('kontak_darurat', auth()->user()->kontak_darurat) }}" placeholder="+62 xxxx xxxx"></div>
+        <div class="form-row-input">
+          <input type="text" name="kontak_darurat" value="{{ old('kontak_darurat', auth()->user()->kontak_darurat) }}" placeholder="+62 xxxx xxxx">
+          @error('kontak_darurat')
+            <div style="color: #dc2626; font-size: 0.75rem; margin-top: 0.25rem;">{{ $message }}</div>
+          @enderror
+        </div>
       </div>
     </div>
 

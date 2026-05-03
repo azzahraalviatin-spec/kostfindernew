@@ -285,10 +285,7 @@
   .fitur-main-title { font-family:'Fraunces',serif;font-weight:700;color:#0f1923;font-size:clamp(1.7rem,3vw,2.5rem);line-height:1.15;letter-spacing:-.02em;margin-bottom:.9rem; }
   .fitur-main-title span { color:var(--kf-primary);font-style:italic; }
   .fitur-main-desc { color:#6c768a;font-size:.92rem;line-height:1.85;margin-bottom:1.8rem; }
-  .fitur-toggle-btn { display:inline-flex;align-items:center;gap:.6rem;padding:.75rem 1.5rem;border-radius:.85rem;border:0;background:linear-gradient(135deg,var(--kf-primary),var(--kf-primary-dark));color:#fff;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .22s;white-space:nowrap;box-shadow:0 6px 18px rgba(228,87,46,.28); }
-  .fitur-toggle-btn:hover { transform:translateY(-1px);box-shadow:0 10px 24px rgba(228,87,46,.36);color:#fff; }
-  .fitur-toggle-btn.tutup { background:linear-gradient(135deg,#6c768a,#4a5568);box-shadow:0 4px 12px rgba(0,0,0,.15); }
-  .ft-icon-chevron { transition:transform .35s cubic-bezier(.34,1.56,.64,1); }
+
   .fitur-cards-wrap { max-height:0;overflow:hidden;transition:max-height .55s cubic-bezier(.4,0,.2,1),opacity .4s ease;opacity:0; }
   .fitur-cards-wrap.open { max-height:1800px;opacity:1; }
   .fitur-cards-grid { display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding-top:1.5rem; }
@@ -684,14 +681,9 @@
   <div class="container fitur-inner">
     <div class="fitur-layout reveal">
       <div class="fitur-desc-box">
-        <div class="fitur-platform-badge"><i class="bi bi-stars"></i> Platform KostFinder</div>
+        <div class="fitur-platform-badge"><i class="bi bi-stars"></i> Keunggulan Platform</div>
         <h3 class="fitur-main-title">Kenapa Cari Kost <span>Lebih Gampang</span> di Sini?</h3>
         <p class="fitur-main-desc">KostFinder dirancang khusus untuk pencari kost di Jawa Timur. Semua informasi tersaji lengkap — harga, fasilitas, foto, dan lokasi — di satu tempat, tanpa perlu tanya sana-sini.</p>
-        <button type="button" class="fitur-toggle-btn open" id="fiturToggleBtn" onclick="toggleSemuaFitur()">
-          <i class="bi bi-grid-3x3-gap"></i>
-          <span id="fiturToggleLabel">Sembunyikan Fitur</span>
-          <i class="bi bi-chevron-up ft-icon-chevron"></i>
-        </button>
       </div>
       <div>
         <div class="fitur-cards-wrap open" id="fiturList">
@@ -926,23 +918,7 @@ function terapkanFilter(){
   bootstrap.Modal.getInstance(document.getElementById('modalFilter'))?.hide();
   window.location.href='{{ route("carikos") }}?'+params.toString();
 }
-function toggleSemuaFitur(){
-  const btn=document.getElementById('fiturToggleBtn');
-  const list=document.getElementById('fiturList');
-  const label=document.getElementById('fiturToggleLabel');
-  const chevron=btn.querySelector('.ft-icon-chevron');
-  const isOpen=list.classList.contains('open');
-  list.classList.toggle('open',!isOpen);
-  if(!isOpen){
-    label.textContent='Sembunyikan Fitur';
-    chevron.className='bi bi-chevron-up ft-icon-chevron';
-    btn.classList.remove('tutup');
-  } else {
-    label.textContent='Lihat Semua Fitur';
-    chevron.className='bi bi-chevron-down ft-icon-chevron';
-    btn.classList.add('tutup');
-  }
-}
+
 function toggleFav(btn){
   const kostId=btn.dataset.kost,icon=btn.querySelector('i');
   btn.classList.add('pop'); setTimeout(()=>btn.classList.remove('pop'),300);
