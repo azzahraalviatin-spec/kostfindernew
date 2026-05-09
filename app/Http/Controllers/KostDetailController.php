@@ -72,24 +72,23 @@ class KostDetailController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        // Untuk maps: ambil semua (max 100) tanpa pagination
-$kostsMapRaw = (clone $query)->limit(100)
-->get(['id_kost','nama_kost','alamat','kota','harga_mulai','tipe_kost','latitude','longitude', 'foto_utama']);
+        $kostsMapRaw = (clone $query)->limit(100)
+            ->get(['id_kost','nama_kost','alamat','kota','harga_mulai','tipe_kost','latitude','longitude','foto_utama']);
 
-$kostsMap = $kostsMapRaw->map(fn($k) => [
-'id'    => $k->id_kost,
-'nama'  => $k->nama_kost,
-'alamat'=> $k->alamat,
-'kota'  => $k->kota,
-'harga' => $k->harga_mulai,
-'tipe'  => $k->tipe_kost,
-'lat'   => $k->latitude,
-'lng'   => $k->longitude,
-'url'   => route('kost.show', $k->id_kost),
-'foto'  => $k->foto_utama ? asset('storage/' . $k->foto_utama) : null,
-]);
+        $kostsMap = $kostsMapRaw->map(fn($k) => [
+            'id'     => $k->id_kost,
+            'nama'   => $k->nama_kost,
+            'alamat' => $k->alamat,
+            'kota'   => $k->kota,
+            'harga'  => $k->harga_mulai,
+            'tipe'   => $k->tipe_kost,
+            'lat'    => $k->latitude,
+            'lng'    => $k->longitude,
+            'url'    => route('kost.show', $k->id_kost),
+            'foto'   => $k->foto_utama ? asset('storage/' . $k->foto_utama) : null,
+        ]);
 
-return view('cari-kost', compact('kosts', 'kostsMap'));
+        return view('cari-kost', compact('kosts', 'kostsMap'));
     }
 
     public function show(Kost $kost)
@@ -126,6 +125,7 @@ return view('cari-kost', compact('kosts', 'kostsMap'));
 
         $settings = \App\Models\Setting::first();
         $komisiAdmin = (int) ($settings->komisi_admin ?? 10000);
+
         return view('kost.show', compact('kost', 'rekomendasi', 'komisiAdmin'));
     }
 }

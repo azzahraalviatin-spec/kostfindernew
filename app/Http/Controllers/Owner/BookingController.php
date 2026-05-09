@@ -40,17 +40,20 @@ class BookingController extends Controller
     public function terima(Booking $booking)
     {
         $booking = $this->findOwnerBooking($booking->getKey());
-        $booking->update(['status_booking' => 'diterima']);
-
-        // ✅ Update status kamar jadi terisi saat booking diterima
+    
+        $booking->update([
+            'status_booking'    => 'diterima',
+            'status_pembayaran' => 'lunas',
+            'pendapatan_owner'  => $booking->total_harga,
+            'komisi_admin'      => $booking->komisi_admin,
+        ]);
+    
         $booking->room->update(['status_kamar' => 'terisi']);
-
-        // 🔔 Notifikasi ke penyewa
         $booking->user->notify(new BookingStatusNotification($booking));
-
-        return back()->with('success', 'Booking berhasil diterima!');
+    
+        return back()->with('success', 'Booking diterima! Pendapatan Rp ' .
+            number_format($booking->total_harga, 0, ',', '.') . ' berhasil dicatat!');
     }
-
     public function tolak(Request $request, Booking $booking)
     {
         $request->validate([
@@ -75,27 +78,18 @@ class BookingController extends Controller
     public function selesai(Booking $booking)
     {
         $booking = $this->findOwnerBooking($booking->getKey());
-
-        // Pendapatan owner adalah harga sewa murni (karena biaya layanan admin sudah dibayar penyewa di luar harga sewa)
-        $totalHarga      = $booking->total_harga;
-        $komisiAdmin     = $booking->komisi_admin;
-        $pendapatanOwner = $totalHarga;
-
-        // Update status booking + catat pendapatan
+    
         $booking->update([
-            'status_booking'   => 'selesai',
-            'komisi_admin'     => $komisiAdmin,
-            'pendapatan_owner' => $pendapatanOwner,
+            'status_booking'    => 'selesai',
+            'status_pembayaran' => 'lunas',
+            'pendapatan_owner'  => $booking->total_harga,
+            'komisi_admin'      => $booking->komisi_admin,
         ]);
-
-        // ✅ Update status kamar jadi terisi
-        $booking->room->update(['status_kamar' => 'terisi']);
-
-        return back()->with('success',
-            'Booking selesai! Pendapatan Rp ' .
-            number_format($pendapatanOwner, 0, ',', '.') .
-            " berhasil dicatat!"
-        );
+    
+        $booking->room->update(['status_kamar' => 'tersedia']);
+    
+        return back()->with('success', 'Booking selesai! Pendapatan Rp ' .
+            number_format($booking->total_harga, 0, ',', '.') . ' berhasil dicatat!');
     }
 
     private function ownerBookingsQuery()
